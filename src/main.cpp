@@ -1,0 +1,813 @@
+/*----------------------------------------------------------------------------*/
+/*                                                                            */
+/*    Module:       main.cpp                                                  */
+/*    Author:       VEX                                                       */
+/*    Created:      Thu Sep 26 2019                                           */
+/*    Description:  Competition Template                                      */
+/*                                                                            */
+/*----------------------------------------------------------------------------*/
+
+// ---- START VEXCODE CONFIGURED DEVICES ----
+// ---- END VEXCODE CONFIGURED DEVICES ----
+
+#include "vex.h"
+#include <cmath>
+#include <iostream>
+#include <algorithm>
+#include <string>
+
+using namespace vex;
+
+// A global instance of competition
+competition Competition;
+
+// define your global instances of motors and other devices here
+triport ThreeWirePort = vex::triport( vex::PORT22 );
+digital_out sorter = vex::digital_out(ThreeWirePort.A);
+digital_out leftStorage = vex::digital_out(ThreeWirePort.B);
+digital_out rightStorage = vex::digital_out(ThreeWirePort.C);
+digital_out toungue = vex::digital_out(ThreeWirePort.D);
+digital_out wedge = vex::digital_out(ThreeWirePort.E);
+
+void resetMotorEncoders(void) {
+  LeftMotor1.resetPosition(); 
+  LeftMotor2.resetPosition(); 
+  LeftMotor3.resetPosition();
+  RightMotor1.resetPosition();
+  RightMotor2.resetPosition();
+  RightMotor3.resetPosition();
+};
+void setDriveMotorStopping(vex::brakeType type) {
+  LeftMotor1.setStopping(type);
+  LeftMotor2.setStopping(type);
+  LeftMotor3.setStopping(type);
+  RightMotor1.setStopping(type);
+  RightMotor2.setStopping(type);
+  RightMotor3.setStopping(type);
+};
+//made for drive curve off, takes input of 0-1, only works positively
+float distributeNormally (float input) {
+  return std::pow(2.71828, -std::pow(((4*input)-2), 2));
+};
+//made for drive curve off, takes input of 0-1, only works positively
+float distributeParabolically (float input) {
+  return ((-3.5*std::pow((input-0.5), 2)) + 1);//-3.5 is the curving varible, power starts at 1/n%
+};
+//made for joystick curving, takes input of 0-1, works both ways
+float distributeExponentially (float input) {
+  return (input > 0 ? 
+  (std::pow(1.025, 100*input)-1)/(std::pow(1.025, 100)-1):
+  -(std::pow(1.025, std::abs(100*input))-1)/(std::pow(1.025, 100)-1)
+  );
+};
+//distance, maxSpeed, fowards
+void MoveStraight(float distance, int maxSpeed, bool fowards) {
+  resetMotorEncoders();
+  //wheels are 2 inches in diamametere, times pi means curcumernce is 7.853975 in
+  //divided by 360 to get the inces per degree (0.0349065556)
+  //times 1.1669779538 for the gearing
+  //gives us the final multiplier of 0.0139626222 
+  /*float distancedeg = (distance*0.0349065556)*1.1669779538;
+  Brain.Screen.setCursor(4, 1);
+  Brain.Screen.print("dist in deg = %.2f  ", (distance*0.0349065556)*1.1669779538);*/
+  //alright screw it it's revolution time
+  //distance (in inches) divided by wheel curcumfrence mutiplied by gear raito
+  //TODO: switch this to pid for greater accuracy.
+  float gearningConstant = 1.1669779538;
+  float distanceRev = (distance/7.853975)*gearningConstant;
+  if (fowards) {
+    while (LeftMotor2.position(rev) < distanceRev or RightMotor2.position(rev) < distanceRev) {
+    float distanceTraveledPctLeft = (LeftMotor2.position(rev)/distanceRev)*100.0;
+    float distributedSpeedLeft = distributeParabolically(distanceTraveledPctLeft/100.0)*100.0;
+    float ajustedSpeedLeft = std::max((distributedSpeedLeft * (maxSpeed/100.0)), 10.0);
+
+    float distanceTraveledPctRight = (RightMotor2.position(rev)/distanceRev)*100.0;
+    float distributedSpeedRight = distributeParabolically(distanceTraveledPctRight/100.0)*100.0;
+    float ajustedSpeedRight = std::max((distributedSpeedRight * (maxSpeed/100.0)), 10.0);
+    Brain.Screen.setCursor(1, 1);
+    Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
+    Brain.Screen.setCursor(2, 1);
+    Brain.Screen.print("leftmotor2 %.2f  ", LeftMotor2.position(rev));
+    Brain.Screen.setCursor(3, 1);
+    Brain.Screen.print("distanceTraveledPctLeft = %.2f    ", distanceTraveledPctLeft);
+    Brain.Screen.setCursor(4, 1);
+    Brain.Screen.print("distributedSpeedLeft %.2f  ", distributedSpeedLeft);
+    Brain.Screen.setCursor(5, 1);
+    Brain.Screen.print("ajustedSpeedLeft = %.2f    ", ajustedSpeedLeft);
+    Brain.Screen.setCursor(6, 1);
+    Brain.Screen.print("Rightmotor2 %.2f  ", RightMotor2.position(rev));
+    Brain.Screen.setCursor(7, 1);
+    Brain.Screen.print("distanceTraveledPctRight = %.2f    ", distanceTraveledPctRight);
+    Brain.Screen.setCursor(8, 1);
+    Brain.Screen.print("distributedSpeedRight %.2f  ", distributedSpeedRight);
+    Brain.Screen.setCursor(9, 1);
+    Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
+
+
+    LeftMotor1.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
+    LeftMotor2.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
+    LeftMotor3.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
+    RightMotor1.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
+    RightMotor2.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
+    RightMotor3.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
+    if (LeftMotor2.position(rev) > distanceRev) {
+      LeftMotor1.stop(); 
+      LeftMotor2.stop(); 
+      LeftMotor3.stop();
+    }
+    if (RightMotor2.position(rev) > distanceRev) {
+      RightMotor1.stop(); 
+      RightMotor2.stop(); 
+      RightMotor3.stop();
+    }
+    };
+  }
+  else if (!fowards) {
+    while (LeftMotor2.position(rev) > -distanceRev or RightMotor2.position(rev) > -distanceRev ) {
+    float distanceTraveledPctLeft = (LeftMotor2.position(rev)/distanceRev)*100.0;
+    float distributedSpeedLeft = distributeParabolically(-distanceTraveledPctLeft/100.0)*100.0;
+    float ajustedSpeedLeft = std::max((distributedSpeedLeft * (maxSpeed/100.0)), 10.0);
+
+    float distanceTraveledPctRight = (RightMotor2.position(rev)/distanceRev)*100.0;
+    float distributedSpeedRight = distributeParabolically(-distanceTraveledPctRight/100.0)*100.0;
+    float ajustedSpeedRight = std::max((distributedSpeedRight * (maxSpeed/100.0)), 10.0);
+    
+    Brain.Screen.setCursor(1, 1);
+    Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
+    Brain.Screen.setCursor(2, 1);
+    Brain.Screen.print("leftmotor2 %.2f  ", LeftMotor2.position(rev));
+    Brain.Screen.setCursor(3, 1);
+    Brain.Screen.print("distanceTraveledPctLeft = %.2f    ", distanceTraveledPctLeft);
+    Brain.Screen.setCursor(4, 1);
+    Brain.Screen.print("distributedSpeedLeft %.2f  ", distributedSpeedLeft);
+    Brain.Screen.setCursor(5, 1);
+    Brain.Screen.print("ajustedSpeedLeft = %.2f    ", ajustedSpeedLeft);
+    Brain.Screen.setCursor(6, 1);
+    Brain.Screen.print("Rightmotor2 %.2f  ", RightMotor2.position(rev));
+    Brain.Screen.setCursor(7, 1);
+    Brain.Screen.print("distanceTraveledPctRight = %.2f    ", distanceTraveledPctRight);
+    Brain.Screen.setCursor(8, 1);
+    Brain.Screen.print("distributedSpeedRight %.2f  ", distributedSpeedRight);
+    Brain.Screen.setCursor(9, 1);
+    Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
+
+    LeftMotor1.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
+    LeftMotor2.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
+    LeftMotor3.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
+    RightMotor1.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
+    RightMotor2.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
+    RightMotor3.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
+    if (LeftMotor2.position(rev) < -distanceRev) {
+      LeftMotor1.stop(); 
+      LeftMotor2.stop(); 
+      LeftMotor3.stop();
+    }
+    if (RightMotor2.position(rev) < -distanceRev) {
+      RightMotor1.stop(); 
+      RightMotor2.stop(); 
+      RightMotor3.stop();
+    }
+    };
+  }
+}
+//degrees, maxSpeed, isTurningRight
+void MoveTurning(float degrees, int maxSpeed, bool isturningright) {
+  resetMotorEncoders();
+  //wheels are 2 inches in diamametere, times pi means curcumernce is 7.853975 in
+  //wheel to wheel width is 14.35, time pi means one 360 degree turn is 45.0818165 in covered
+  //divided by 360 is 0.125227 inches covered per degree of turning
+  float gearningConstant = 1.01;
+  float distanceInch = degrees*0.125227;
+  //using the same inch to revolution from driveStraight
+  float distanceRev = (distanceInch/7.853975)*gearningConstant;
+  distanceRev *= 1;//.022;
+  if (isturningright) {
+    while (LeftMotor2.position(rev) < distanceRev or RightMotor2.position(rev) > -distanceRev) {//to turn right, left wheels must go fowards while right wheels must go backwards
+    
+    float distanceTraveledPctRight = (RightMotor2.position(rev)/distanceRev)*100.0;
+    float distributedSpeedRight = distributeParabolically(-distanceTraveledPctRight/100.0)*100.0;
+    float ajustedSpeedRight = std::max((distributedSpeedRight * (maxSpeed/100.0)), 10.0);
+
+    float distanceTraveledPctLeft = (LeftMotor2.position(rev)/distanceRev)*100.0;
+    float distributedSpeedLeft = distributeParabolically(distanceTraveledPctLeft/100.0)*100.0;
+    float ajustedSpeedLeft = std::max((distributedSpeedLeft * (maxSpeed/100.0)), 10.0);
+    
+    Brain.Screen.setCursor(1, 1);
+    Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
+    Brain.Screen.setCursor(2, 1);
+    Brain.Screen.print("leftmotor2 %.2f  ", LeftMotor2.position(rev));
+    Brain.Screen.setCursor(3, 1);
+    Brain.Screen.print("distanceTraveledPctLeft = %.2f    ", distanceTraveledPctLeft);
+    Brain.Screen.setCursor(4, 1);
+    Brain.Screen.print("distributedSpeedLeft %.2f  ", distributedSpeedLeft);
+    Brain.Screen.setCursor(5, 1);
+    Brain.Screen.print("ajustedSpeedLeft = %.2f    ", ajustedSpeedLeft);
+    Brain.Screen.setCursor(6, 1);
+    Brain.Screen.print("Rightmotor2 %.2f  ", RightMotor2.position(rev));
+    Brain.Screen.setCursor(7, 1);
+    Brain.Screen.print("distanceTraveledPctRight = %.2f    ", distanceTraveledPctRight);
+    Brain.Screen.setCursor(8, 1);
+    Brain.Screen.print("distributedSpeedRight %.2f  ", distributedSpeedRight);
+    Brain.Screen.setCursor(9, 1);
+    Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
+
+    LeftMotor1.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
+    LeftMotor2.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
+    LeftMotor3.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
+    RightMotor1.spin(directionType::rev, ajustedSpeedRight, velocityUnits::pct);
+    RightMotor2.spin(directionType::rev, ajustedSpeedRight, velocityUnits::pct);
+    RightMotor3.spin(directionType::rev, ajustedSpeedRight, velocityUnits::pct);
+      if (LeftMotor2.position(rev) > distanceRev) {
+        LeftMotor1.stop(); 
+        LeftMotor2.stop(); 
+        LeftMotor3.stop();
+      }
+      if (RightMotor2.position(rev) < -distanceRev) {
+        RightMotor1.stop(); 
+        RightMotor2.stop(); 
+        RightMotor3.stop();
+      }
+    };
+  }
+  else if (!isturningright) {
+    while (RightMotor2.position(rev) < distanceRev or LeftMotor2.position(rev) > -distanceRev) {
+    
+    float distanceTraveledPctLeft = (LeftMotor2.position(rev)/distanceRev);
+    float distributedSpeedLeft = distributeParabolically(-distanceTraveledPctLeft);
+    float ajustedSpeedLeft = std::max((distributedSpeedLeft * (maxSpeed * 1.0)), 5.0);
+    
+    float distanceTraveledPctRight = (RightMotor2.position(rev)/distanceRev);
+    float distributedSpeedRight = distributeParabolically(distanceTraveledPctRight);
+    float ajustedSpeedRight = std::max((distributedSpeedRight * (maxSpeed * 1.0)), 5.0);
+    
+    Brain.Screen.setCursor(1, 1);
+    Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
+    Brain.Screen.setCursor(2, 1);
+    Brain.Screen.print("leftmotor2 %.2f  ", LeftMotor2.position(rev));
+    Brain.Screen.setCursor(3, 1);
+    Brain.Screen.print("distanceTraveledPctLeft = %.2f    ", distanceTraveledPctLeft);
+    Brain.Screen.setCursor(4, 1);
+    Brain.Screen.print("distributedSpeedLeft %.2f  ", distributedSpeedLeft);
+    Brain.Screen.setCursor(5, 1);
+    Brain.Screen.print("ajustedSpeedLeft = %.2f    ", ajustedSpeedLeft);
+    Brain.Screen.setCursor(6, 1);
+    Brain.Screen.print("Rightmotor2 %.2f  ", RightMotor2.position(rev));
+    Brain.Screen.setCursor(7, 1);
+    Brain.Screen.print("distanceTraveledPctRight = %.2f    ", distanceTraveledPctRight);
+    Brain.Screen.setCursor(8, 1);
+    Brain.Screen.print("distributedSpeedRight %.2f  ", distributedSpeedRight);
+    Brain.Screen.setCursor(9, 1);
+    Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
+
+    LeftMotor1.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
+    LeftMotor2.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
+    LeftMotor3.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
+    RightMotor1.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
+    RightMotor2.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
+    RightMotor3.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
+    if (LeftMotor2.position(rev) < -distanceRev) {
+        LeftMotor1.stop(); 
+        LeftMotor2.stop(); 
+        LeftMotor3.stop();
+    }
+    if (RightMotor2.position(rev) > distanceRev) {
+      RightMotor1.stop(); 
+      RightMotor2.stop(); 
+      RightMotor3.stop();
+    }
+    };
+  }
+};
+//distance traveled by the greater side; leftToRightRaito determines the turning direction.
+//robot turns right if it is greater than one, turns left if it is lesser
+void TurnWithRatio(float distance, int maxSpeed, double LeftToRightRatio, bool fowards) {
+  resetMotorEncoders();
+  //turn with ratio uses the ratio of left wheel power to right wheel power to determine direction
+  //if LtoRratio is greater than 1, it turns right, less than one and it turns left
+  //ratios should be given in fractions anyway to help keep track of turns 
+  //TODO: switch this to pid for greater accuracy.
+  float gearningConstant = 1.1669779538;
+  float distanceRev = (distance/7.853975)*gearningConstant;
+  float leftSideMultiplier = 1;
+  float rightSideMultiplier = 1;
+    if (LeftToRightRatio > 1) {
+      if (1/LeftToRightRatio <= 0.00001) {rightSideMultiplier = 0;}
+      else {rightSideMultiplier = 1/LeftToRightRatio;}
+    }
+    else if (LeftToRightRatio < 1) {
+      leftSideMultiplier = LeftToRightRatio;
+    };
+    float distanceRevRight = distanceRev*rightSideMultiplier;
+    float distanceRevLeft = distanceRev*leftSideMultiplier;
+
+    
+
+    if (fowards) {
+      while ((LeftMotor2.position(rev) < distanceRevLeft or RightMotor2.position(rev) < distanceRevRight)) {
+      float distanceTraveledPctRight = (RightMotor2.position(rev)/distanceRevRight)*100.0;
+      float distributedSpeedRight = distributeParabolically(distanceTraveledPctRight/100.0)*100.0;
+      float ajustedSpeedRight = std::max((distributedSpeedRight * (maxSpeed/100.0)), 10.0);
+
+      float distanceTraveledPctLeft = (LeftMotor2.position(rev)/distanceRevLeft)*100.0;
+      float distributedSpeedLeft = distributeParabolically(distanceTraveledPctLeft/100.0)*100.0;
+      float ajustedSpeedLeft = std::max((distributedSpeedLeft * (maxSpeed/100.0)), 10.0);
+      
+      ajustedSpeedLeft *= leftSideMultiplier;
+      ajustedSpeedRight *= rightSideMultiplier;
+
+      LeftMotor1.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
+      LeftMotor2.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
+      LeftMotor3.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
+      RightMotor1.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
+      RightMotor2.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
+      RightMotor3.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
+      if (LeftMotor2.position(rev) > distanceRev) {
+        LeftMotor1.stop(); 
+        LeftMotor2.stop(); 
+        LeftMotor3.stop();
+      }
+      if (RightMotor2.position(rev) > distanceRev) {
+        RightMotor1.stop(); 
+        RightMotor2.stop(); 
+        RightMotor3.stop();
+      }
+      };
+    }
+    else if (!fowards) {
+      while ((LeftMotor2.position(rev) > -distanceRevLeft or RightMotor2.position(rev) > -distanceRevRight)) {
+      float distanceTraveledPctRight = (RightMotor2.position(rev)/distanceRevRight)*100.0;
+      float distributedSpeedRight = distributeParabolically(distanceTraveledPctRight/100.0)*100.0;
+      float ajustedSpeedRight = std::max((distributedSpeedRight * (maxSpeed/100.0)), 10.0);
+
+      float distanceTraveledPctLeft = (LeftMotor2.position(rev)/distanceRevLeft)*100.0;
+      float distributedSpeedLeft = distributeParabolically(distanceTraveledPctLeft/100.0)*100.0;
+      float ajustedSpeedLeft = std::max((distributedSpeedLeft * (maxSpeed/100.0)), 10.0);
+      
+      ajustedSpeedLeft *= leftSideMultiplier;
+      ajustedSpeedRight *= rightSideMultiplier;
+
+      LeftMotor1.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
+      LeftMotor2.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
+      LeftMotor3.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
+      RightMotor1.spin(directionType::rev, ajustedSpeedRight, velocityUnits::pct);
+      RightMotor2.spin(directionType::rev, ajustedSpeedRight, velocityUnits::pct);
+      RightMotor3.spin(directionType::rev, ajustedSpeedRight, velocityUnits::pct);
+      if (LeftMotor2.position(rev) < -distanceRev) {
+        LeftMotor1.stop(); 
+        LeftMotor2.stop(); 
+        LeftMotor3.stop();
+      }
+      if (RightMotor2.position(rev) < -distanceRev) {
+        RightMotor1.stop(); 
+        RightMotor2.stop(); 
+        RightMotor3.stop();
+      }
+      };
+    }  
+};
+void MoveFree(float timemsec, bool isFoward, int power) {
+  if (isFoward) {
+    LeftMotor1.spin(directionType::fwd, power, velocityUnits::pct);
+    LeftMotor2.spin(directionType::fwd, power, velocityUnits::pct); 
+    LeftMotor3.spin(directionType::fwd, power, velocityUnits::pct);
+    RightMotor1.spin(directionType::fwd, power, velocityUnits::pct);
+    RightMotor2.spin(directionType::fwd, power, velocityUnits::pct);
+    RightMotor3.spin(directionType::fwd, power, velocityUnits::pct);
+  }
+  else {
+    LeftMotor1.spin(directionType::fwd, power, velocityUnits::pct);
+    LeftMotor2.spin(directionType::fwd, power, velocityUnits::pct); 
+    LeftMotor3.spin(directionType::fwd, power, velocityUnits::pct);
+    RightMotor1.spin(directionType::fwd, power, velocityUnits::pct);
+    RightMotor2.spin(directionType::fwd, power, velocityUnits::pct);
+    RightMotor3.spin(directionType::fwd, power, velocityUnits::pct);
+  }
+  wait(timemsec, msec);
+  LeftMotor1.stop(coast);
+  LeftMotor2.stop(coast); 
+  LeftMotor3.stop(coast);
+  RightMotor1.stop(coast);
+  RightMotor2.stop(coast);
+  RightMotor3.stop(coast);
+};
+
+/*---------------------------------------------------------------------------*/
+/*                          Pre-Autonomous Functions                         */
+/*                                                                           */
+/*  You may want to perform some actions before the competition starts.      */
+/*  Do them in the following function.  You must return from this function   */
+/*  or the autonomous and usercontrol tasks will not be started.  This       */
+/*  function is only called once after the V5 has been powered on and        */
+/*  not every time that the robot is disabled.                               */
+/*---------------------------------------------------------------------------*/
+
+void pre_auton(void) {
+  // Initializing Robot Configuration. DO NOT REMOVE!
+  vexcodeInit();
+
+  // All activities that occur before the competition starts
+  // Example: clearing encoders, setting servo positions, ...
+}
+
+/*---------------------------------------------------------------------------*/
+/*                                                                           */
+/*                              Autonomous Task                              */
+/*                                                                           */
+/*  This task is used to control your robot during the autonomous phase of   */
+/*  a VEX Competition.                                                       */
+/*                                                                           */
+/*  You must modify the code to add your own robot specific commands here.   */
+/*---------------------------------------------------------------------------*/
+
+void autonomous(void) {
+  // ..........................................................................
+  // Insert autonomous user code here.
+  // ..........................................................................
+  LeftMotor1.setStopping(brake); 
+  LeftMotor2.setStopping(brake); 
+  LeftMotor3.setStopping(brake);
+  RightMotor1.setStopping(brake);
+  RightMotor2.setStopping(brake);
+  RightMotor3.setStopping(brake);
+  rightStorage.set(false);
+  toungue.set(true);
+  sorter.set(true);
+  /////////////////////////////////////left side
+  /*MoveStraight(29+(3/8), 50, true);
+  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct); 
+  RollerMotorRight.spin(directionType::rev, 80, velocityUnits::pct);
+  RollerMotorLeft.spin(directionType::fwd, 80, velocityUnits::pct);
+  MoveTurning(90, 50, false);
+  wait(200, msec);
+  MoveFree(2000, true, 40);
+  wait(1000, msec);
+  RollerMotorRight.stop();
+  RollerMotorLeft.stop();
+  MoveStraight(12, 50, false);
+  toungue.set(false);
+  MoveTurning(230, 50, true);
+  wedge.set(true);
+  MoveFree(1500, true, 70);
+  rightStorage.set(false);
+  leftStorage.set(false);
+  RollerMotorRight.spin(directionType::rev, 100, velocityUnits::pct);
+  RollerMotorLeft.spin(directionType::fwd, 100, velocityUnits::pct);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  wait(1000, msec);
+  //*/
+  /////////////////////////////////////right side
+  MoveStraight(29+(3/8), 50, true);
+  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct); 
+  RollerMotorRight.spin(directionType::rev, 80, velocityUnits::pct);
+  RollerMotorLeft.spin(directionType::fwd, 80, velocityUnits::pct);
+  MoveTurning(90, 50, true);
+  wait(200, msec);
+  MoveFree(2000, true, 40);
+  wait(1000, msec);
+  RollerMotorRight.stop();
+  RollerMotorLeft.stop();
+  MoveStraight(12, 50, false);
+  toungue.set(false);
+  MoveTurning(230, 50, false);
+  wedge.set(true);
+  MoveFree(1500, true, 70);
+  rightStorage.set(false);
+  leftStorage.set(false);
+  RollerMotorRight.spin(directionType::rev, 100, velocityUnits::pct);
+  RollerMotorLeft.spin(directionType::fwd, 100, velocityUnits::pct);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  wait(1000, msec);
+  //*/
+  
+}
+
+/*---------------------------------------------------------------------------*/
+/*                                                                           */
+/*                              User Control Task                            */
+/*                                                                           */
+/*  This task is used to control your robot during the user control phase of */
+/*  a VEX Competition.                                                       */
+/*                                                                           */
+/*  You must modify the code to add your own robot specific commands here.   */
+/*---------------------------------------------------------------------------*/
+
+void usercontrol(void) {
+  LeftMotor1.setStopping(coast); 
+  LeftMotor2.setStopping(coast); 
+  LeftMotor3.setStopping(coast);
+  RightMotor1.setStopping(coast);
+  RightMotor2.setStopping(coast);
+  RightMotor3.setStopping(coast);
+  float FBsensitivity = 1.0;
+  float LRsensitivity = 0.6;
+  int tractspeed = 50;
+  bool Ypressed = false;
+  bool Xpressed = false;
+  bool R1Pressed = false;
+  bool L1Pressed = false;
+  bool R2Pressed = false;
+  bool L2Pressed = false;
+  bool UpPressed = false;
+  bool LeftSideOuttaking = false;
+  bool RightSideOuttaking = false;
+  bool sorterRight = true;
+  bool outtakeDirectionUp = true;
+  bool sideLeft = true;
+  bool LeftSideIntaking = false;
+  bool RightSideIntaking = false;
+  bool bottomOuttaking = false;
+  int timer = 0;
+  // User control code here, inside the loop
+  while (1) {
+    //Driving Control
+    if (timer > 0) {timer -=1;}
+    //controller dead zone
+    int deadzonepct  = 10;
+    float Axis3 = Controller1.Axis3.position(percent);
+    float Axis1 = Controller1.Axis1.position(percent);
+    float Axis3Dead = Axis3 > deadzonepct ? ((Axis3 - deadzonepct)*1.00/(100-deadzonepct))*100 : 
+    Axis3Dead = Axis3 < -deadzonepct ? ((Axis3 + deadzonepct)*1.00/(100-deadzonepct))*100 : 0;
+    float Axis1Dead = Axis1 > deadzonepct ? ((Axis1 - deadzonepct)*1.00/(100-deadzonepct))*100 : 
+    Axis1Dead = Axis1 < -deadzonepct ? ((Axis1 + deadzonepct)*1.00/(100-deadzonepct))*100 : 0;
+    //joystick curve, taking place after deadzoning
+    float Axis1Curved = distributeExponentially(Axis1Dead/100.0)*100.0;
+    float Axis3Curved = distributeExponentially(Axis3Dead/100.0)*100.0;
+    //sensitivity
+    Axis1Curved *= LRsensitivity;
+    Axis3Curved *= FBsensitivity;
+    //set motor powers
+    int leftsidepower = (Axis3Curved + Axis1Curved);
+    int rightsidepower = (Axis3Curved - Axis1Curved);
+    LeftMotor1.spin(directionType::fwd, leftsidepower, velocityUnits::pct); 
+    LeftMotor2.spin(directionType::fwd, leftsidepower, velocityUnits::pct); 
+    LeftMotor3.spin(directionType::fwd, leftsidepower, velocityUnits::pct);
+    RightMotor1.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
+    RightMotor2.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
+    RightMotor3.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
+    //1
+    if (Controller1.ButtonR1.pressing() && !R1Pressed) {
+      RightSideOuttaking = true;
+      timer = 3;
+      LeftSideOuttaking = false;
+      RightSideIntaking = false;
+      LeftSideIntaking = false;
+      bottomOuttaking = false;
+    }
+    if (Controller1.ButtonL1.pressing() && !L1Pressed) {
+      LeftSideOuttaking = true;
+      timer = 3;
+      RightSideOuttaking = false;
+      RightSideIntaking = false;
+      LeftSideIntaking = false;
+      bottomOuttaking = false;
+    }
+    if (!Controller1.ButtonR1.pressing()) {
+      R1Pressed = false;
+    };
+    if (!Controller1.ButtonL1.pressing()) {
+      L1Pressed = false;
+    };
+    //2
+    if (Controller1.ButtonR2.pressing() && !R2Pressed) {
+      RightSideIntaking = true;
+      LeftSideIntaking = false;
+      LeftSideOuttaking = false;
+      RightSideOuttaking = false;
+      bottomOuttaking = false;
+    }
+    if (Controller1.ButtonL2.pressing() && !L2Pressed) {
+      LeftSideIntaking = true;
+      RightSideIntaking = false;
+      LeftSideOuttaking = false;
+      RightSideOuttaking = false;
+      bottomOuttaking = false;
+    }
+    if (!Controller1.ButtonR2.pressing()) {
+      R2Pressed = false;
+    };
+    if (!Controller1.ButtonL2.pressing()) {
+      L2Pressed = false;
+    };
+    if (Controller1.ButtonX.pressing() && !Xpressed) {
+      bottomOuttaking = !bottomOuttaking;
+      Xpressed = true;
+    }
+    if (!Controller1.ButtonX.pressing()) {
+      Xpressed = false;
+    };
+    if (Controller1.ButtonUp.pressing() && !UpPressed) {
+      outtakeDirectionUp = !outtakeDirectionUp;
+      UpPressed = true;
+    }
+    if (!Controller1.ButtonUp.pressing()) {
+      UpPressed = false;
+    };
+    if (Controller1.ButtonA.pressing()) {
+      LeftSideIntaking = false;
+      RightSideIntaking = false;
+      LeftSideOuttaking = false;
+      RightSideOuttaking = false;
+    }
+    
+    if (Controller1.ButtonB.pressing()) {toungue.set(true);}
+    else {toungue.set(false);};
+    
+    if (Controller1.ButtonDown.pressing()) {wedge.set(true);}
+    else {wedge.set(false);};
+
+    IntakeMotor.stop();
+    RollerMotorRight.stop();
+    RollerMotorLeft.stop();
+    OuttakeMotor.stop();
+    if (RightSideIntaking) {
+      RollerMotorRight.spin(directionType::rev, tractspeed, velocityUnits::pct);
+      IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+      sorterRight = false;
+      RightSideOuttaking = false;
+      LeftSideOuttaking = false;
+      leftStorage.set(true);
+      rightStorage.set(true);
+      sorter.set(!sorterRight);
+    }
+    if (LeftSideIntaking) {
+      RollerMotorLeft.spin(directionType::fwd, tractspeed, velocityUnits::pct);
+      IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+      sorterRight = true;
+      RightSideOuttaking = false;
+      LeftSideOuttaking = false;
+      leftStorage.set(true);
+      rightStorage.set(true);
+      sorter.set(!sorterRight);
+    }
+    if (LeftSideOuttaking) {
+      if (bottomOuttaking || (timer > 0)) {
+        RollerMotorLeft.spin(directionType::rev, 100, velocityUnits::pct);
+        sorterRight = false;
+        IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+      }
+      else {
+        RollerMotorLeft.spin(directionType::fwd, 100, velocityUnits::pct);
+        leftStorage.set(false);
+        rightStorage.set(true);
+        if (outtakeDirectionUp) {OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);}
+        else {OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);}
+      }
+    }
+    if (RightSideOuttaking) {
+      if (bottomOuttaking || (timer > 0)) {
+        RollerMotorRight.spin(directionType::fwd, 100, velocityUnits::pct);
+        sorterRight = true;
+        IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+      }
+      else {
+        RollerMotorRight.spin(directionType::rev, 100, velocityUnits::pct);
+        leftStorage.set(true);
+        rightStorage.set(false);
+        if (outtakeDirectionUp) {OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);}
+        else {OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);}
+      }
+    }
+    
+
+
+    /*
+    if (Controller1.ButtonR1.pressing() && !R1Pressed) {
+      rightStorageClosed = !rightStorageClosed;
+      if (!rightStorageClosed) {
+        leftStorageClosed = true;
+        RollerMotorRight.spin(directionType::rev, tractspeed, velocityUnits::pct);
+      }//stopping is taken care of later on
+      R1Pressed = true;
+    }
+    
+    if (Controller1.ButtonL1.pressing() && !L1Pressed) {
+      leftStorageClosed = !leftStorageClosed;
+      if (!leftStorageClosed) {
+        rightStorageClosed = true;
+        RollerMotorLeft.spin(directionType::rev, tractspeed, velocityUnits::pct);
+      }//stopping is taken care of later on
+      L1Pressed = true;
+    }
+
+    if (!Controller1.ButtonR1.pressing()) {
+      R1Pressed = false;
+    };
+    if (!Controller1.ButtonL1.pressing()) {
+      L1Pressed = false;
+    };
+
+    if (leftStorageClosed) {
+      RollerMotorLeft.stop();
+    }
+    if (rightStorageClosed) {
+      RollerMotorRight.stop();
+    }
+
+    rightStorage.set(rightStorageClosed);
+    leftStorage.set(leftStorageClosed);
+    
+    if (Controller1.ButtonL2.pressing()) {//leftside intaking
+    RollerMotorLeft.spin(directionType::fwd, tractspeed, velocityUnits::pct);
+    RollerMotorRight.stop();
+    IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+    sorterLeft = true;
+    }
+    else if (Controller1.ButtonR2.pressing()) {//rightside intaking
+    RollerMotorRight.spin(directionType::rev, tractspeed, velocityUnits::pct);
+    RollerMotorLeft.stop();
+    IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+    sorterLeft = false;
+    }
+
+    if ((IntakeMotor.current(percentUnits::pct) > 30) && 
+    (IntakeMotor.velocity(percentUnits::pct) >-10) && 
+    (IntakeMotor.velocity(percentUnits::pct) < 10) &&
+    (timer == 0)
+    ) {
+      IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+      timer = 1;
+    };
+    if (timer > 6) {IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct); timer = 0;}
+        
+    if (Controller1.ButtonA.pressing()) {
+    RollerMotorLeft.stop(coast);
+    RollerMotorRight.stop(coast);
+    IntakeMotor.stop(coast); 
+    OuttakeMotor.stop(coast);
+    } 
+    
+    
+    if (Controller1.ButtonX.pressing() && !Xpressed) {
+      leftStorageClosed = true;
+      rightStorageClosed = true;
+      if (sorterLeft) {
+        RollerMotorLeft.spin(directionType::fwd, tractspeed, velocityUnits::pct);
+      }
+      else {RollerMotorRight.spin(directionType::fwd, tractspeed, velocityUnits::pct);}
+      IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+      Xpressed = true;
+    }
+    if (!Controller1.ButtonX.pressing()) {
+      Xpressed = false;
+    };
+    sorter.set(sorterLeft);
+
+    
+    
+    
+
+    if (Controller1.ButtonB.pressing()) {
+      toungue.set(true);
+    }
+    else {toungue.set(false);};
+    if (Controller1.ButtonDown.pressing()) {
+      wedge.set(true);
+    }
+    else {wedge.set(false);};
+    
+
+    if (Controller1.ButtonY.pressing() && !Ypressed) {
+      if (tractspeed == 50) {tractspeed = 100;} 
+      else {tractspeed = 50;}
+      Ypressed = true;
+    }
+    if (!Controller1.ButtonY.pressing()) {
+      Ypressed = false;
+    } 
+    */
+    Controller1.Screen.setCursor(1, 1);
+    Controller1.Screen.print(RollerMotorLeft.temperature(pct));
+    Controller1.Screen.setCursor(1, 9);
+    Controller1.Screen.print(IntakeMotor.temperature(pct));
+    Controller1.Screen.setCursor(1, 17);
+    Controller1.Screen.print(RollerMotorRight.temperature(pct));
+
+    Brain.Screen.setCursor(1, 1);
+    Brain.Screen.print(IntakeMotor.current(pct));
+    Brain.Screen.setCursor(2, 1);
+    Brain.Screen.print(IntakeMotor.velocity(pct));
+    Brain.Screen.setCursor(3, 1);
+    Brain.Screen.print(outtakeDirectionUp);
+
+
+    wait(20, msec); // Sleep the task for a short amount of time to
+                    // prevent wasted resources.
+  }
+}
+
+//
+// Main will set up the competition functions and callbacks.
+//
+int main() {
+  // Set up callbacks for autonomous and driver control periods.
+  Competition.autonomous(autonomous);
+  Competition.drivercontrol(usercontrol);
+
+  // Run the pre-autonomous function.
+  pre_auton();
+
+  // Prevent main from exiting with an infinite loop.
+  while (true) {
+    wait(100, msec);
+  }
+}
