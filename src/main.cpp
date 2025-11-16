@@ -61,7 +61,7 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
   resetMotorEncoders();
   //wheels are 2 inches in diamametere, times pi means curcumernce is 7.853975 in
   //divided by 360 to get the inces per degree (0.0349065556)
-  //times 1.1669779538 for the gearing
+  //times 4/3 for the gearing (48/36)
   //gives us the final multiplier of 0.0139626222 
   /*float distancedeg = (distance*0.0349065556)*1.1669779538;
   Brain.Screen.setCursor(4, 1);
@@ -69,8 +69,10 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
   //alright screw it it's revolution time
   //distance (in inches) divided by wheel curcumfrence mutiplied by gear raito
   //TODO: switch this to pid for greater accuracy.
-  float gearningConstant = 1.1669779538;
-  float distanceRev = (distance/7.853975)*gearningConstant;
+  float tuningConstant = 1;
+  float gearingConstant = 4/3;
+  float distanceRev = (distance/7.853975)*gearingConstant;
+  distanceRev *= tuningConstant;
   if (fowards) {
     while (LeftMotor2.position(rev) < distanceRev or RightMotor2.position(rev) < distanceRev) {
     float distanceTraveledPctLeft = (LeftMotor2.position(rev)/distanceRev)*100.0;
@@ -172,11 +174,12 @@ void MoveTurning(float degrees, int maxSpeed, bool isturningright) {
   //wheels are 2 inches in diamametere, times pi means curcumernce is 7.853975 in
   //wheel to wheel width is 14.35, time pi means one 360 degree turn is 45.0818165 in covered
   //divided by 360 is 0.125227 inches covered per degree of turning
-  float gearningConstant = 1.01;
+  float tuningConstant = 0.75;
+  float gearingConstant = 4/3;
   float distanceInch = degrees*0.125227;
   //using the same inch to revolution from driveStraight
-  float distanceRev = (distanceInch/7.853975)*gearningConstant;
-  distanceRev *= 1;//.022;
+  float distanceRev = (distanceInch/7.853975)*gearingConstant;
+  distanceRev *= tuningConstant;
   if (isturningright) {
     while (LeftMotor2.position(rev) < distanceRev or RightMotor2.position(rev) > -distanceRev) {//to turn right, left wheels must go fowards while right wheels must go backwards
     
@@ -282,8 +285,10 @@ void TurnWithRatio(float distance, int maxSpeed, double LeftToRightRatio, bool f
   //if LtoRratio is greater than 1, it turns right, less than one and it turns left
   //ratios should be given in fractions anyway to help keep track of turns 
   //TODO: switch this to pid for greater accuracy.
-  float gearningConstant = 1.1669779538;
-  float distanceRev = (distance/7.853975)*gearningConstant;
+  float tuningConstant = 1;
+  float gearingConstant = 4/3;
+  float distanceRev = (distance/7.853975)*gearingConstant;
+  distanceRev *= tuningConstant;
   float leftSideMultiplier = 1;
   float rightSideMultiplier = 1;
     if (LeftToRightRatio > 1) {
