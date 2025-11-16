@@ -23,11 +23,7 @@ competition Competition;
 
 // define your global instances of motors and other devices here
 triport ThreeWirePort = vex::triport( vex::PORT22 );
-digital_out sorter = vex::digital_out(ThreeWirePort.A);
-digital_out leftStorage = vex::digital_out(ThreeWirePort.B);
-digital_out rightStorage = vex::digital_out(ThreeWirePort.C);
-digital_out toungue = vex::digital_out(ThreeWirePort.D);
-digital_out wedge = vex::digital_out(ThreeWirePort.E);
+digital_out toungue = vex::digital_out(ThreeWirePort.A);
 
 void resetMotorEncoders(void) {
   LeftMotor1.resetPosition(); 
@@ -429,55 +425,8 @@ void autonomous(void) {
   RightMotor1.setStopping(brake);
   RightMotor2.setStopping(brake);
   RightMotor3.setStopping(brake);
-  rightStorage.set(false);
-  toungue.set(true);
-  sorter.set(true);
+  toungue.set(false);
   /////////////////////////////////////left side
-  /*MoveStraight(29+(3/8), 50, true);
-  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct); 
-  RollerMotorRight.spin(directionType::rev, 80, velocityUnits::pct);
-  RollerMotorLeft.spin(directionType::fwd, 80, velocityUnits::pct);
-  MoveTurning(90, 50, false);
-  wait(200, msec);
-  MoveFree(2000, true, 40);
-  wait(1000, msec);
-  RollerMotorRight.stop();
-  RollerMotorLeft.stop();
-  MoveStraight(12, 50, false);
-  toungue.set(false);
-  MoveTurning(230, 50, true);
-  wedge.set(true);
-  MoveFree(1500, true, 70);
-  rightStorage.set(false);
-  leftStorage.set(false);
-  RollerMotorRight.spin(directionType::rev, 100, velocityUnits::pct);
-  RollerMotorLeft.spin(directionType::fwd, 100, velocityUnits::pct);
-  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  wait(1000, msec);
-  //*/
-  /////////////////////////////////////right side
-  MoveStraight(29+(3/8), 50, true);
-  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct); 
-  RollerMotorRight.spin(directionType::rev, 80, velocityUnits::pct);
-  RollerMotorLeft.spin(directionType::fwd, 80, velocityUnits::pct);
-  MoveTurning(90, 50, true);
-  wait(200, msec);
-  MoveFree(2000, true, 40);
-  wait(1000, msec);
-  RollerMotorRight.stop();
-  RollerMotorLeft.stop();
-  MoveStraight(12, 50, false);
-  toungue.set(false);
-  MoveTurning(230, 50, false);
-  wedge.set(true);
-  MoveFree(1500, true, 70);
-  rightStorage.set(false);
-  leftStorage.set(false);
-  RollerMotorRight.spin(directionType::rev, 100, velocityUnits::pct);
-  RollerMotorLeft.spin(directionType::fwd, 100, velocityUnits::pct);
-  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  wait(1000, msec);
-  //*/
   
 }
 
@@ -500,22 +449,6 @@ void usercontrol(void) {
   RightMotor3.setStopping(coast);
   float FBsensitivity = 1.0;
   float LRsensitivity = 0.6;
-  int tractspeed = 50;
-  bool Ypressed = false;
-  bool Xpressed = false;
-  bool R1Pressed = false;
-  bool L1Pressed = false;
-  bool R2Pressed = false;
-  bool L2Pressed = false;
-  bool UpPressed = false;
-  bool LeftSideOuttaking = false;
-  bool RightSideOuttaking = false;
-  bool sorterRight = true;
-  bool outtakeDirectionUp = true;
-  bool sideLeft = true;
-  bool LeftSideIntaking = false;
-  bool RightSideIntaking = false;
-  bool bottomOuttaking = false;
   int timer = 0;
   // User control code here, inside the loop
   while (1) {
@@ -544,250 +477,30 @@ void usercontrol(void) {
     RightMotor1.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
     RightMotor2.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
     RightMotor3.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
-    //1
-    if (Controller1.ButtonR1.pressing() && !R1Pressed) {
-      RightSideOuttaking = true;
-      timer = 3;
-      LeftSideOuttaking = false;
-      RightSideIntaking = false;
-      LeftSideIntaking = false;
-      bottomOuttaking = false;
-    }
-    if (Controller1.ButtonL1.pressing() && !L1Pressed) {
-      LeftSideOuttaking = true;
-      timer = 3;
-      RightSideOuttaking = false;
-      RightSideIntaking = false;
-      LeftSideIntaking = false;
-      bottomOuttaking = false;
-    }
-    if (!Controller1.ButtonR1.pressing()) {
-      R1Pressed = false;
-    };
-    if (!Controller1.ButtonL1.pressing()) {
-      L1Pressed = false;
-    };
-    //2
-    if (Controller1.ButtonR2.pressing() && !R2Pressed) {
-      RightSideIntaking = true;
-      LeftSideIntaking = false;
-      LeftSideOuttaking = false;
-      RightSideOuttaking = false;
-      bottomOuttaking = false;
-    }
-    if (Controller1.ButtonL2.pressing() && !L2Pressed) {
-      LeftSideIntaking = true;
-      RightSideIntaking = false;
-      LeftSideOuttaking = false;
-      RightSideOuttaking = false;
-      bottomOuttaking = false;
-    }
-    if (!Controller1.ButtonR2.pressing()) {
-      R2Pressed = false;
-    };
-    if (!Controller1.ButtonL2.pressing()) {
-      L2Pressed = false;
-    };
-    if (Controller1.ButtonX.pressing() && !Xpressed) {
-      bottomOuttaking = !bottomOuttaking;
-      Xpressed = true;
-    }
-    if (!Controller1.ButtonX.pressing()) {
-      Xpressed = false;
-    };
-    if (Controller1.ButtonUp.pressing() && !UpPressed) {
-      outtakeDirectionUp = !outtakeDirectionUp;
-      UpPressed = true;
-    }
-    if (!Controller1.ButtonUp.pressing()) {
-      UpPressed = false;
-    };
-    if (Controller1.ButtonA.pressing()) {
-      LeftSideIntaking = false;
-      RightSideIntaking = false;
-      LeftSideOuttaking = false;
-      RightSideOuttaking = false;
-    }
     
     if (Controller1.ButtonB.pressing()) {toungue.set(true);}
     else {toungue.set(false);};
     
-    if (Controller1.ButtonDown.pressing()) {wedge.set(true);}
-    else {wedge.set(false);};
-
-    IntakeMotor.stop();
-    RollerMotorRight.stop();
-    RollerMotorLeft.stop();
-    OuttakeMotor.stop();
-    if (RightSideIntaking) {
-      RollerMotorRight.spin(directionType::rev, tractspeed, velocityUnits::pct);
+   if (Controller1.ButtonLeft.pressing()) {
       IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
-      sorterRight = false;
-      RightSideOuttaking = false;
-      LeftSideOuttaking = false;
-      leftStorage.set(true);
-      rightStorage.set(true);
-      sorter.set(!sorterRight);
+      OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
     }
-    if (LeftSideIntaking) {
-      RollerMotorLeft.spin(directionType::fwd, tractspeed, velocityUnits::pct);
-      IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
-      sorterRight = true;
-      RightSideOuttaking = false;
-      LeftSideOuttaking = false;
-      leftStorage.set(true);
-      rightStorage.set(true);
-      sorter.set(!sorterRight);
+    if (Controller1.ButtonRight.pressing()) {
+      IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+      OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
     }
-    if (LeftSideOuttaking) {
-      if (bottomOuttaking || (timer > 0)) {
-        RollerMotorLeft.spin(directionType::rev, 100, velocityUnits::pct);
-        sorterRight = false;
-        IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-      }
-      else {
-        RollerMotorLeft.spin(directionType::fwd, 100, velocityUnits::pct);
-        leftStorage.set(false);
-        rightStorage.set(true);
-        if (outtakeDirectionUp) {OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);}
-        else {OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);}
-      }
-    }
-    if (RightSideOuttaking) {
-      if (bottomOuttaking || (timer > 0)) {
-        RollerMotorRight.spin(directionType::fwd, 100, velocityUnits::pct);
-        sorterRight = true;
-        IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-      }
-      else {
-        RollerMotorRight.spin(directionType::rev, 100, velocityUnits::pct);
-        leftStorage.set(true);
-        rightStorage.set(false);
-        if (outtakeDirectionUp) {OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);}
-        else {OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);}
-      }
-    }
-    
-
-
-    /*
-    if (Controller1.ButtonR1.pressing() && !R1Pressed) {
-      rightStorageClosed = !rightStorageClosed;
-      if (!rightStorageClosed) {
-        leftStorageClosed = true;
-        RollerMotorRight.spin(directionType::rev, tractspeed, velocityUnits::pct);
-      }//stopping is taken care of later on
-      R1Pressed = true;
-    }
-    
-    if (Controller1.ButtonL1.pressing() && !L1Pressed) {
-      leftStorageClosed = !leftStorageClosed;
-      if (!leftStorageClosed) {
-        rightStorageClosed = true;
-        RollerMotorLeft.spin(directionType::rev, tractspeed, velocityUnits::pct);
-      }//stopping is taken care of later on
-      L1Pressed = true;
-    }
-
-    if (!Controller1.ButtonR1.pressing()) {
-      R1Pressed = false;
-    };
-    if (!Controller1.ButtonL1.pressing()) {
-      L1Pressed = false;
-    };
-
-    if (leftStorageClosed) {
-      RollerMotorLeft.stop();
-    }
-    if (rightStorageClosed) {
-      RollerMotorRight.stop();
-    }
-
-    rightStorage.set(rightStorageClosed);
-    leftStorage.set(leftStorageClosed);
-    
-    if (Controller1.ButtonL2.pressing()) {//leftside intaking
-    RollerMotorLeft.spin(directionType::fwd, tractspeed, velocityUnits::pct);
-    RollerMotorRight.stop();
-    IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-    sorterLeft = true;
-    }
-    else if (Controller1.ButtonR2.pressing()) {//rightside intaking
-    RollerMotorRight.spin(directionType::rev, tractspeed, velocityUnits::pct);
-    RollerMotorLeft.stop();
-    IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-    sorterLeft = false;
-    }
-
-    if ((IntakeMotor.current(percentUnits::pct) > 30) && 
-    (IntakeMotor.velocity(percentUnits::pct) >-10) && 
-    (IntakeMotor.velocity(percentUnits::pct) < 10) &&
-    (timer == 0)
-    ) {
-      IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
-      timer = 1;
-    };
-    if (timer > 6) {IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct); timer = 0;}
-        
     if (Controller1.ButtonA.pressing()) {
-    RollerMotorLeft.stop(coast);
-    RollerMotorRight.stop(coast);
-    IntakeMotor.stop(coast); 
-    OuttakeMotor.stop(coast);
-    } 
-    
-    
-    if (Controller1.ButtonX.pressing() && !Xpressed) {
-      leftStorageClosed = true;
-      rightStorageClosed = true;
-      if (sorterLeft) {
-        RollerMotorLeft.spin(directionType::fwd, tractspeed, velocityUnits::pct);
-      }
-      else {RollerMotorRight.spin(directionType::fwd, tractspeed, velocityUnits::pct);}
-      IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
-      Xpressed = true;
+      IntakeMotor.stop();
+      OuttakeMotor.stop();
     }
-    if (!Controller1.ButtonX.pressing()) {
-      Xpressed = false;
-    };
-    sorter.set(sorterLeft);
 
-    
-    
-    
-
-    if (Controller1.ButtonB.pressing()) {
-      toungue.set(true);
-    }
-    else {toungue.set(false);};
-    if (Controller1.ButtonDown.pressing()) {
-      wedge.set(true);
-    }
-    else {wedge.set(false);};
-    
-
-    if (Controller1.ButtonY.pressing() && !Ypressed) {
-      if (tractspeed == 50) {tractspeed = 100;} 
-      else {tractspeed = 50;}
-      Ypressed = true;
-    }
-    if (!Controller1.ButtonY.pressing()) {
-      Ypressed = false;
-    } 
-    */
     Controller1.Screen.setCursor(1, 1);
-    Controller1.Screen.print(RollerMotorLeft.temperature(pct));
-    Controller1.Screen.setCursor(1, 9);
     Controller1.Screen.print(IntakeMotor.temperature(pct));
+    Controller1.Screen.setCursor(1, 9);
+    Controller1.Screen.print("");
     Controller1.Screen.setCursor(1, 17);
-    Controller1.Screen.print(RollerMotorRight.temperature(pct));
+    Controller1.Screen.print(OuttakeMotor.temperature(pct));
 
-    Brain.Screen.setCursor(1, 1);
-    Brain.Screen.print(IntakeMotor.current(pct));
-    Brain.Screen.setCursor(2, 1);
-    Brain.Screen.print(IntakeMotor.velocity(pct));
-    Brain.Screen.setCursor(3, 1);
-    Brain.Screen.print(outtakeDirectionUp);
 
 
     wait(20, msec); // Sleep the task for a short amount of time to

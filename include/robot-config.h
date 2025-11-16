@@ -10,8 +10,6 @@ extern motor LeftMotor3;
 extern motor RightMotor1;
 extern motor RightMotor2;
 extern motor RightMotor3;
-extern motor RollerMotorLeft;
-extern motor RollerMotorRight;
 extern motor IntakeMotor;
 extern motor OuttakeMotor;
 /**
