@@ -25,6 +25,8 @@ competition Competition;
 triport ThreeWirePort = vex::triport( vex::PORT22 );
 digital_out toungue = vex::digital_out(ThreeWirePort.A);
 
+rotation Odometry = rotation(PORT20, false);
+
 void resetMotorEncoders(void) {
   LeftMotor1.resetPosition(); 
   LeftMotor2.resetPosition(); 
@@ -32,6 +34,7 @@ void resetMotorEncoders(void) {
   RightMotor1.resetPosition();
   RightMotor2.resetPosition();
   RightMotor3.resetPosition();
+  Odometry.resetPosition();
 };
 void setDriveMotorStopping(vex::brakeType type) {
   LeftMotor1.setStopping(type);
@@ -59,19 +62,16 @@ float distributeExponentially (float input) {
 //distance, maxSpeed, fowards
 void MoveStraight(float distance, int maxSpeed, bool fowards) {
   resetMotorEncoders();
-  //wheels are 2 inches in diamametere, times pi means curcumernce is 7.853975 in
-  //divided by 360 to get the inces per degree (0.0349065556)
+  //odometry wheels are 2 inches in diamametere, times pi means curcumernce is 6.28318 in
   //times 4/3 for the gearing (48/36)
-  //gives us the final multiplier of 0.0139626222 
-  /*float distancedeg = (distance*0.0349065556)*1.1669779538;
-  Brain.Screen.setCursor(4, 1);
-  Brain.Screen.print("dist in deg = %.2f  ", (distance*0.0349065556)*1.1669779538);*/
-  //alright screw it it's revolution time
-  //distance (in inches) divided by wheel curcumfrence mutiplied by gear raito
+  //gives us the final multiplier of 8.3775733333 inches per revolution
+
+  //distance (in inches) is divided by wheel curcumfrence mutiplied by gear raito
+
   //TODO: switch this to pid for greater accuracy.
   float tuningConstant = 1;
-  float gearingConstant = 4/3;
-  float distanceRev = (distance/7.853975)*gearingConstant;
+  float gearingConstant = 3/4;
+  float distanceRev = (distance/6.28318)/gearingConstant;
   distanceRev *= tuningConstant;
   if (fowards) {
     while (LeftMotor2.position(rev) < distanceRev or RightMotor2.position(rev) < distanceRev) {
@@ -175,10 +175,10 @@ void MoveTurning(float degrees, int maxSpeed, bool isturningright) {
   //wheel to wheel width is 14.35, time pi means one 360 degree turn is 45.0818165 in covered
   //divided by 360 is 0.125227 inches covered per degree of turning
   float tuningConstant = 0.75;
-  float gearingConstant = 4/3;
+  float gearingConstant = 3/4;
   float distanceInch = degrees*0.125227;
   //using the same inch to revolution from driveStraight
-  float distanceRev = (distanceInch/7.853975)*gearingConstant;
+  float distanceRev = (distanceInch/7.853975)/gearingConstant;
   distanceRev *= tuningConstant;
   if (isturningright) {
     while (LeftMotor2.position(rev) < distanceRev or RightMotor2.position(rev) > -distanceRev) {//to turn right, left wheels must go fowards while right wheels must go backwards
@@ -286,8 +286,8 @@ void TurnWithRatio(float distance, int maxSpeed, double LeftToRightRatio, bool f
   //ratios should be given in fractions anyway to help keep track of turns 
   //TODO: switch this to pid for greater accuracy.
   float tuningConstant = 1;
-  float gearingConstant = 4/3;
-  float distanceRev = (distance/7.853975)*gearingConstant;
+  float gearingConstant = 3/4;
+  float distanceRev = (distance/7.853975)/gearingConstant;
   distanceRev *= tuningConstant;
   float leftSideMultiplier = 1;
   float rightSideMultiplier = 1;
@@ -486,6 +486,10 @@ void usercontrol(void) {
     if (Controller1.ButtonB.pressing()) {toungue.set(true);}
     else {toungue.set(false);};
     
+    
+
+
+
    if (Controller1.ButtonLeft.pressing()) {
       IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
       OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
