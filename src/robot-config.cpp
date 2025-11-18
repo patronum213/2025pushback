@@ -14,7 +14,7 @@ motor RightMotor1 = motor(PORT11, ratio6_1, false);
 motor RightMotor2 = motor(PORT12, ratio6_1, false);
 motor RightMotor3 = motor(PORT13, ratio6_1, false);
 motor IntakeMotor = motor(PORT9, ratio18_1, true);
-motor OuttakeMotor = motor(PORT8, ratio18_1, true);
+motor OuttakeMotor = motor(PORT10, ratio18_1, true);
 
 
 

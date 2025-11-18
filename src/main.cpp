@@ -454,11 +454,13 @@ void usercontrol(void) {
   RightMotor3.setStopping(coast);
   float FBsensitivity = 1.0;
   float LRsensitivity = 0.6;
-  int timer = 0;
+  bool L1pressed = false;
+  bool L2pressed = false;
+  bool R2pressed = false;
+  int systemState = 0;//0 is at rest, 1 is intaking, 2 is top outtaking, 3 is bottom outtaking
   // User control code here, inside the loop
   while (1) {
     //Driving Control
-    if (timer > 0) {timer -=1;}
     //controller dead zone
     int deadzonepct  = 10;
     float Axis3 = Controller1.Axis3.position(percent);
@@ -483,30 +485,67 @@ void usercontrol(void) {
     RightMotor2.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
     RightMotor3.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
     
+    //toungue action
     if (Controller1.ButtonB.pressing()) {toungue.set(true);}
     else {toungue.set(false);};
-    
-    
+    //down outtaking
+    if (Controller1.ButtonL1.pressing() && !L1pressed) {
+      if (systemState == 3) {systemState=0;}
+      else {systemState = 3;}
+      L1pressed = true;
+    }
+    if (!Controller1.ButtonL1.pressing()) {
+      L1pressed = false;
+    };
+    //top outtaking
+    if (Controller1.ButtonL2.pressing() && !L2pressed) {
+      if (systemState == 2) {systemState=0;}
+      else {systemState = 2;}
+      L2pressed = true;
+    }
+    if (!Controller1.ButtonL2.pressing()) {
+      L2pressed = false;
+    };
+    //intaking
+    if (Controller1.ButtonR2.pressing() && !R2pressed) {
+      if (systemState == 1) {systemState=0;}
+      else {systemState = 1;}
+      R2pressed = true;
+    }
+    if (!Controller1.ButtonR2.pressing()) {
+      R2pressed = false;
+    };
 
+    if (Controller1.ButtonA.pressing()) {
+      systemState = 0;
+    }
 
-
-   if (Controller1.ButtonLeft.pressing()) {
+    switch (systemState) {
+      case 3://down outtaking
       IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
       OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
-    }
-    if (Controller1.ButtonRight.pressing()) {
+      break; 
+      case 2://top outtaking
       IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
       OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-    }
-    if (Controller1.ButtonA.pressing()) {
+      break; 
+      case 1://intaking
+      IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+      OuttakeMotor.stop();
+      break; 
+      case 0:
+      default: 
       IntakeMotor.stop();
       OuttakeMotor.stop();
+      break;
     }
+
+    
 
     Controller1.Screen.setCursor(1, 1);
     Controller1.Screen.print(IntakeMotor.temperature(pct));
     Controller1.Screen.setCursor(1, 9);
-    Controller1.Screen.print("");
+    Controller1.Screen.print(systemState);
     Controller1.Screen.setCursor(1, 17);
     Controller1.Screen.print(OuttakeMotor.temperature(pct));
 
