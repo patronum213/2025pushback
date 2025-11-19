@@ -67,13 +67,11 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
   //odometry wheels are 2 inches in diamametere, times pi means curcumernce is 6.28318 in
   //times 4/3 for the gearing (48/36)
   //gives us the final multiplier of 8.3775733333 inches per revolution
-
   //distance (in inches) is divided by wheel curcumfrence mutiplied by gear raito
-
   //TODO: switch this to pid for greater accuracy.
-  float tuningConstant = 1;
-  float gearingConstant = 3/4;
-  float distanceRev = (distance/6.28318)/gearingConstant;
+  float tuningConstant = 0.713;
+  float gearingConstant = (3.0/4.0);
+  float distanceRev = ((distance/6.28318)/gearingConstant);
   distanceRev *= tuningConstant;
   if (fowards) {
     while (LeftMotor2.position(rev) < distanceRev or RightMotor2.position(rev) < distanceRev) {
@@ -176,8 +174,8 @@ void MoveTurning(float degrees, int maxSpeed, bool isturningright) {
   //wheels are 2 inches in diamametere, times pi means curcumernce is 7.853975 in
   //wheel to wheel width is 14.35, time pi means one 360 degree turn is 45.0818165 in covered
   //divided by 360 is 0.125227 inches covered per degree of turning
-  float tuningConstant = 0.75;
-  float gearingConstant = 3/4;
+  float tuningConstant = 0.778;//note: tuned for 50% power
+  float gearingConstant = 3.0/4.0;
   float distanceInch = degrees*0.125227;
   //using the same inch to revolution from driveStraight
   float distanceRev = (distanceInch/7.853975)/gearingConstant;
@@ -288,7 +286,7 @@ void TurnWithRatio(float distance, int maxSpeed, double LeftToRightRatio, bool f
   //ratios should be given in fractions anyway to help keep track of turns 
   //TODO: switch this to pid for greater accuracy.
   float tuningConstant = 1;
-  float gearingConstant = 3/4;
+  float gearingConstant = 3.0/4.0;
   float distanceRev = (distance/7.853975)/gearingConstant;
   distanceRev *= tuningConstant;
   float leftSideMultiplier = 1;
@@ -434,6 +432,7 @@ void autonomous(void) {
   RightMotor3.setStopping(brake);
   toungue.set(false);
   /////////////////////////////////////left side
+  MoveTurning(90, 50, false);
   
 }
 
