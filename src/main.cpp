@@ -24,6 +24,8 @@ competition Competition;
 // define your global instances of motors and other devices here
 triport ThreeWirePort = vex::triport( vex::PORT22 );
 digital_out toungue = vex::digital_out(ThreeWirePort.A);
+digital_out leftWing = vex::digital_out(ThreeWirePort.B);
+digital_out rightWing = vex::digital_out(ThreeWirePort.C);
 
 rotation Odometry = rotation(PORT20, false);
 
@@ -488,6 +490,11 @@ void usercontrol(void) {
     //toungue action
     if (Controller1.ButtonB.pressing()) {toungue.set(true);}
     else {toungue.set(false);};
+    //descoring wings
+    if (Controller1.ButtonUp.pressing()) {leftWing.set(true);}
+    else {leftWing.set(false);};
+    if (Controller1.ButtonX.pressing()) {rightWing.set(true);}
+    else {rightWing.set(false);};
     //down outtaking
     if (Controller1.ButtonL1.pressing() && !L1pressed) {
       if (systemState == 3) {systemState=0;}
