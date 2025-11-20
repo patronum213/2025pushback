@@ -28,6 +28,7 @@ digital_out leftWing = vex::digital_out(ThreeWirePort.B);
 digital_out rightWing = vex::digital_out(ThreeWirePort.C);
 
 rotation Odometry = rotation(PORT20, false);
+inertial Inertial = inertial(PORT16);
 
 void resetMotorEncoders(void) {
   LeftMotor1.resetPosition(); 
@@ -551,7 +552,7 @@ void usercontrol(void) {
     Controller1.Screen.setCursor(1, 1);
     Controller1.Screen.print(IntakeMotor.temperature(pct));
     Controller1.Screen.setCursor(1, 9);
-    Controller1.Screen.print(systemState);
+    Controller1.Screen.print(Inertial.isCalibrating());
     Controller1.Screen.setCursor(1, 17);
     Controller1.Screen.print(OuttakeMotor.temperature(pct));
 
@@ -566,6 +567,7 @@ void usercontrol(void) {
 // Main will set up the competition functions and callbacks.
 //
 int main() {
+  while (Inertial.isCalibrating()) {};
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
   Competition.drivercontrol(usercontrol);
