@@ -171,23 +171,19 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
 }
 //degrees, maxSpeed; positive is right negative is left
 void MoveTurning(float degrees, int maxSpeed) {
-
+  float tolernceConstant = 0.1;
   resetMotorEncoders();
   Inertial.resetRotation();
-    float targetDifferncePct = (abs(Inertial.rotation(deg) - degrees))/degrees*100.0;
-    float distributedSpeed = distributeParabolically(-(100.0-(std::min(targetDifferncePct*1.0, 100.0)))/100.0)*100.0;
+    while (std::abs(Inertial.rotation(deg) - degrees) >= tolernceConstant) {//to turn right, left wheels must go fowards while right wheels must go backwards
+
+    float targetDifferncePct = std::abs(((std::abs(Inertial.rotation(deg) - degrees))/degrees)*100.0);
+    float distributedSpeed = distributeParabolically((100.0-(std::min(targetDifferncePct*1.0, 100.0)))/100.0)*100.0;
     float ajustedSpeedRight = std::max((distributedSpeed * (maxSpeed/100.0)), 10.0);
     float ajustedSpeedLeft = std::max((distributedSpeed * (maxSpeed/100.0)), 10.0);
-    while (abs(Inertial.rotation(deg) - degrees) >= 0) {//to turn right, left wheels must go fowards while right wheels must go backwards
-
-    targetDifferncePct = (abs(Inertial.rotation(deg) - degrees))/degrees*100.0;
-    distributedSpeed = distributeParabolically(-(100.0-targetDifferncePct)/100.0)*100.0;
-    ajustedSpeedRight = std::max((distributedSpeed * (maxSpeed/100.0)), 10.0);
-    ajustedSpeedLeft = std::max((distributedSpeed * (maxSpeed/100.0)), 10.0);
     
     Brain.Screen.setCursor(1, 1);
     Brain.Screen.print("Inertial degrees = %.2f    ", Inertial.rotation(deg));
-    Brain.Screen.setCursor(2, 1);
+    Brain.Screen.setCursor(3, 1);
     Brain.Screen.print("targetDifferncePct = %.2f    ", targetDifferncePct);
     Brain.Screen.setCursor(4, 1);
     Brain.Screen.print("distributedSpeed %.2f  ", distributedSpeed);
@@ -212,7 +208,7 @@ void MoveTurning(float degrees, int maxSpeed) {
       RightMotor2.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
       RightMotor3.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
     }
-      if (abs(Inertial.rotation() - degrees) <= 0) {
+      if (abs(Inertial.rotation() - degrees) <= tolernceConstant) {
         LeftMotor1.stop(); 
         LeftMotor2.stop(); 
         LeftMotor3.stop();
@@ -221,18 +217,6 @@ void MoveTurning(float degrees, int maxSpeed) {
         RightMotor3.stop();
       }
     };
-    Brain.Screen.setCursor(1, 1);
-    Brain.Screen.print("Inertial degrees = %.2f    ", Inertial.rotation());
-    Brain.Screen.setCursor(2, 1);
-    Brain.Screen.print("targetDifferncePct = %.2f    ", targetDifferncePct);
-    Brain.Screen.setCursor(4, 1);
-    Brain.Screen.print("distributedSpeed %.2f  ", distributedSpeed);
-    Brain.Screen.setCursor(5, 1);
-    Brain.Screen.print("ajustedSpeedLeft = %.2f    ", ajustedSpeedLeft);
-    Brain.Screen.setCursor(6, 1);
-    Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
-    Brain.Screen.setCursor(7, 1);
-    Brain.Screen.print("true/false = %.2f    ", (abs(Inertial.rotation() - degrees) >= 3));
     
   
 };
@@ -503,9 +487,7 @@ void autonomous(void) {
   while (Inertial.isCalibrating()) {
     wait(20, msec);
   }
-  MoveTurning(90, 50);
-  //MoveTurningOld(90, 50, true);
-  
+  MoveTurning(90, 30);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -639,8 +621,8 @@ void usercontrol(void) {
 //
 int main() {
   // Set up callbacks for autonomous and driver control periods.
-  Competition.autonomous(usercontrol);
-  Competition.drivercontrol(autonomous);
+  Competition.autonomous(autonomous);
+  Competition.drivercontrol(autonomous);//usercontrol
 
   // Run the pre-autonomous function.
   pre_auton();
