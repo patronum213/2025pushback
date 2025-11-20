@@ -169,8 +169,58 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
     };
   }
 }
+//degrees, maxSpeed; positive is right negative is left
+void MoveTurning(float degrees, int maxSpeed) {
+
+  resetMotorEncoders();
+  Inertial.resetRotation();
+    while (abs(Inertial.rotation() - degrees) <= 3) {//to turn right, left wheels must go fowards while right wheels must go backwards
+
+    float targetDifferncePct = (abs(Inertial.rotation() - degrees))/degrees*100.0;
+    float distributedSpeed = distributeParabolically(-(100.0-targetDifferncePct)/100.0)*100.0;
+    float ajustedSpeedRight = std::max((distributedSpeed * (maxSpeed/100.0)), 10.0);
+    float ajustedSpeedLeft = std::max((distributedSpeed * (maxSpeed/100.0)), 10.0);
+    
+    Brain.Screen.setCursor(1, 1);
+    Brain.Screen.print("Inertial degrees = %.2f    ", Inertial.rotation());
+    Brain.Screen.setCursor(2, 1);
+    Brain.Screen.print("targetDifferncePct = %.2f    ", targetDifferncePct);
+    Brain.Screen.setCursor(4, 1);
+    Brain.Screen.print("distributedSpeed %.2f  ", distributedSpeed);
+    Brain.Screen.setCursor(5, 1);
+    Brain.Screen.print("ajustedSpeedLeft = %.2f    ", ajustedSpeedLeft);
+    Brain.Screen.setCursor(6, 1);
+    Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
+
+    if ((degrees - Inertial.rotation())>0) {
+      LeftMotor1.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
+      LeftMotor2.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
+      LeftMotor3.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
+      RightMotor1.spin(directionType::rev, ajustedSpeedRight, velocityUnits::pct);
+      RightMotor2.spin(directionType::rev, ajustedSpeedRight, velocityUnits::pct);
+      RightMotor3.spin(directionType::rev, ajustedSpeedRight, velocityUnits::pct);
+    }
+    else {
+      LeftMotor1.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
+      LeftMotor2.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
+      LeftMotor3.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
+      RightMotor1.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
+      RightMotor2.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
+      RightMotor3.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
+    }
+      if (abs(Inertial.rotation() - degrees) <= 3) {
+        LeftMotor1.stop(); 
+        LeftMotor2.stop(); 
+        LeftMotor3.stop();
+        RightMotor1.stop(); 
+        RightMotor2.stop(); 
+        RightMotor3.stop();
+      }
+    };
+  
+};
 //degrees, maxSpeed, isTurningRight
-void MoveTurning(float degrees, int maxSpeed, bool isturningright) {
+void MoveTurningOld(float degrees, int maxSpeed, bool isturningright) {
   resetMotorEncoders();
   //wheels are 2 inches in diamametere, times pi means curcumernce is 7.853975 in
   //wheel to wheel width is 14.35, time pi means one 360 degree turn is 45.0818165 in covered
@@ -433,7 +483,7 @@ void autonomous(void) {
   RightMotor3.setStopping(brake);
   toungue.set(false);
   /////////////////////////////////////left side
-  MoveTurning(90, 50, false);
+  MoveTurning(90, 50);
   
 }
 
@@ -567,7 +617,6 @@ void usercontrol(void) {
 // Main will set up the competition functions and callbacks.
 //
 int main() {
-  while (Inertial.isCalibrating()) {};
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
   Competition.drivercontrol(usercontrol);
