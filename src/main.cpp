@@ -171,7 +171,7 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
 }
 //degrees, maxSpeed; positive is right negative is left
 void MoveTurning(float degrees, int maxSpeed) {
-  float tolernceConstant = 0.1;
+  float tolernceConstant = 0.3;
   resetMotorEncoders();
   Inertial.resetRotation();
     while (std::abs(Inertial.rotation(deg) - degrees) >= tolernceConstant) {//to turn right, left wheels must go fowards while right wheels must go backwards
@@ -428,12 +428,12 @@ void MoveFree(float timemsec, bool isFoward, int power) {
     RightMotor3.spin(directionType::fwd, power, velocityUnits::pct);
   }
   else {
-    LeftMotor1.spin(directionType::fwd, power, velocityUnits::pct);
-    LeftMotor2.spin(directionType::fwd, power, velocityUnits::pct); 
-    LeftMotor3.spin(directionType::fwd, power, velocityUnits::pct);
-    RightMotor1.spin(directionType::fwd, power, velocityUnits::pct);
-    RightMotor2.spin(directionType::fwd, power, velocityUnits::pct);
-    RightMotor3.spin(directionType::fwd, power, velocityUnits::pct);
+    LeftMotor1.spin(directionType::rev, power, velocityUnits::pct);
+    LeftMotor2.spin(directionType::rev, power, velocityUnits::pct); 
+    LeftMotor3.spin(directionType::rev, power, velocityUnits::pct);
+    RightMotor1.spin(directionType::rev, power, velocityUnits::pct);
+    RightMotor2.spin(directionType::rev, power, velocityUnits::pct);
+    RightMotor3.spin(directionType::rev, power, velocityUnits::pct);
   }
   wait(timemsec, msec);
   LeftMotor1.stop(coast);
@@ -482,12 +482,28 @@ void autonomous(void) {
   RightMotor1.setStopping(brake);
   RightMotor2.setStopping(brake);
   RightMotor3.setStopping(brake);
+  OuttakeMotor.setStopping(coast);
   toungue.set(false);
   /////////////////////////////////////left side
   while (Inertial.isCalibrating()) {
     wait(20, msec);
   }
-  MoveTurning(90, 30);
+  MoveStraight(31.25, 40, true);
+  MoveTurning(-90, 30);
+  toungue.set(true);
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  wait(200, msec);
+  MoveFree(1000, true, 30);
+  wait(1000, msec);
+  MoveFree(4000, false, 20);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  wait(2500, msec);
+  OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+  wait(500, msec);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+
 }
 
 /*---------------------------------------------------------------------------*/
