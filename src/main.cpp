@@ -458,6 +458,7 @@ void usercontrol(void) {
   float LRsensitivity = 0.6;
   bool L1pressed = false;
   bool L2pressed = false;
+  bool R1pressed = false;
   bool R2pressed = false;
   int systemState = 0;//0 is at rest, 1 is intaking, 2 is top outtaking, 3 is bottom outtaking
   // User control code here, inside the loop
@@ -487,14 +488,23 @@ void usercontrol(void) {
     RightMotor2.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
     RightMotor3.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
     
-    //toungue action
-    if (Controller1.ButtonB.pressing()) {toungue.set(true);}
-    else {toungue.set(false);};
+    
     //descoring wings
-    if (Controller1.ButtonUp.pressing()) {leftWing.set(true);}
+    if (Controller1.ButtonDown.pressing()) {leftWing.set(true);}
     else {leftWing.set(false);};
-    if (Controller1.ButtonX.pressing()) {rightWing.set(true);}
+    
+    if (Controller1.ButtonB.pressing()) {rightWing.set(true);}
     else {rightWing.set(false);};
+
+    //toungue
+    if (Controller1.ButtonR1.pressing() && !R1pressed) {
+      if (toungue.value()) {toungue.set(false);}
+      else {toungue.set(true);}
+      R1pressed = true;
+    }
+    if (!Controller1.ButtonR1.pressing()) {
+      R1pressed = false;
+    };
     //down outtaking
     if (Controller1.ButtonL1.pressing() && !L1pressed) {
       if (systemState == 3) {systemState=0;}
@@ -567,7 +577,6 @@ void usercontrol(void) {
 // Main will set up the competition functions and callbacks.
 //
 int main() {
-  while (Inertial.isCalibrating()) {};
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
   Competition.drivercontrol(usercontrol);
