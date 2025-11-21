@@ -464,7 +464,6 @@ void usercontrol(void) {
   int systemState = 0;//0 is at rest, 1 is intaking, 2 is top outtaking, 3 is bottom outtaking
   // User control code here, inside the loop
   int timer1 = 0;
-  int timer2 = 0;
   while (1) {
     //Driving Control
     //controller dead zone
@@ -493,7 +492,6 @@ void usercontrol(void) {
     
 
     if (timer1 >= 0) {timer1 -= 1;};
-    if (timer2 >= 0) {timer2 -= 1;};
     
     //descoring wings
     if (Controller1.ButtonDown.pressing()) {leftWing.set(true);}
@@ -503,13 +501,18 @@ void usercontrol(void) {
     else {rightWing.set(false);};
 
     //toungue
-    if (Controller1.ButtonR1.pressing()) {toungue.set(true);}
-    else {toungue.set(false);};
-
+    if (Controller1.ButtonR1.pressing() && !R1pressed) {
+      if (toungue.value()) {toungue.set(false);}
+      else {toungue.set(true);}
+      R1pressed = true;
+    }
+    if (!Controller1.ButtonR1.pressing()) {
+      R1pressed = false;
+    };
     
     //down outtaking
     if (Controller1.ButtonL1.pressing() && !L1pressed) {
-      if (systemState == 3) {systemState=0; toungue.set(false);}
+      if (systemState == 3) {systemState = 0; toungue.set(false);}
       else {systemState = 3; toungue.set(true);}
       L1pressed = true;
     }
@@ -519,14 +522,13 @@ void usercontrol(void) {
     //top outtaking
     if (Controller1.ButtonL2.pressing() && !L2pressed) {
       if (systemState == 2) {systemState=0;}
-      else {systemState = 2; timer1 = 3;}
+      else {systemState = 3; timer1 = 2;}
       L2pressed = true;
     }
     if (!Controller1.ButtonL2.pressing()) {
       L2pressed = false;
     };
-    if (timer1 == 0) {systemState = 3; timer2 = 3;}
-    if (timer2 == 0) {systemState = 2;}
+    if (timer1 == 0) {systemState = 2;}
     //intaking
     if (Controller1.ButtonR2.pressing() && !R2pressed) {
       if (systemState == 1) {systemState=0;}
