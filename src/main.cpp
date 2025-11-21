@@ -454,6 +454,7 @@ void usercontrol(void) {
   RightMotor1.setStopping(coast);
   RightMotor2.setStopping(coast);
   RightMotor3.setStopping(coast);
+  OuttakeMotor.setStopping(coast);
   float FBsensitivity = 1.0;
   float LRsensitivity = 0.6;
   bool L1pressed = false;
@@ -462,6 +463,8 @@ void usercontrol(void) {
   bool R2pressed = false;
   int systemState = 0;//0 is at rest, 1 is intaking, 2 is top outtaking, 3 is bottom outtaking
   // User control code here, inside the loop
+  int timer1 = 0;
+  int timer2 = 0;
   while (1) {
     //Driving Control
     //controller dead zone
@@ -488,6 +491,9 @@ void usercontrol(void) {
     RightMotor2.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
     RightMotor3.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
     
+
+    if (timer1 >= 0) {timer1 -= 1;};
+    if (timer2 >= 0) {timer2 -= 1;};
     
     //descoring wings
     if (Controller1.ButtonDown.pressing()) {leftWing.set(true);}
@@ -497,18 +503,14 @@ void usercontrol(void) {
     else {rightWing.set(false);};
 
     //toungue
-    if (Controller1.ButtonR1.pressing() && !R1pressed) {
-      if (toungue.value()) {toungue.set(false);}
-      else {toungue.set(true);}
-      R1pressed = true;
-    }
-    if (!Controller1.ButtonR1.pressing()) {
-      R1pressed = false;
-    };
+    if (Controller1.ButtonR1.pressing()) {toungue.set(true);}
+    else {toungue.set(false);};
+
+    
     //down outtaking
     if (Controller1.ButtonL1.pressing() && !L1pressed) {
-      if (systemState == 3) {systemState=0;}
-      else {systemState = 3;}
+      if (systemState == 3) {systemState=0; toungue.set(false);}
+      else {systemState = 3; toungue.set(true);}
       L1pressed = true;
     }
     if (!Controller1.ButtonL1.pressing()) {
@@ -517,12 +519,14 @@ void usercontrol(void) {
     //top outtaking
     if (Controller1.ButtonL2.pressing() && !L2pressed) {
       if (systemState == 2) {systemState=0;}
-      else {systemState = 2;}
+      else {systemState = 2; timer1 = 3;}
       L2pressed = true;
     }
     if (!Controller1.ButtonL2.pressing()) {
       L2pressed = false;
     };
+    if (timer1 == 0) {systemState = 3; timer2 = 3;}
+    if (timer2 == 0) {systemState = 2;}
     //intaking
     if (Controller1.ButtonR2.pressing() && !R2pressed) {
       if (systemState == 1) {systemState=0;}
@@ -568,7 +572,7 @@ void usercontrol(void) {
 
 
 
-    wait(20, msec); // Sleep the task for a short amount of time to
+    wait(10, msec); // Sleep the task for a short amount of time to
                     // prevent wasted resources.
   }
 }
