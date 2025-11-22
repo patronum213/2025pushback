@@ -471,6 +471,103 @@ void pre_auton(void) {
 /*                                                                           */
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
+//////////////////////////////////////////////////////left side auto, 
+void LeftAuto(void) {
+  MoveStraight(31.25, 60, true);//move to the intake
+  toungue.set(true);
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  MoveTurning(-90, 30);//turn towards it
+  wait(300, msec);
+  MoveFree(800, true, 35);//move in to it
+  MoveFree(3000, false, 25);//move directly backwards in to the goal
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
+  wait(2000, msec);
+  OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
+  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+  wait(300, msec);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  wait (2000, msec);//wait till all the balls are scored
+
+  //expirimental auto
+  /*MoveStraight(19, 40, true);//back out
+  OuttakeMotor.stop();
+  toungue.set(false);
+  MoveTurning(-135, 30);//turn towards the group of 3
+  MoveStraight(34, 70, true);//run in to and intake them
+  MoveTurning(-175, 30);
+  toungue.set(true);
+  MoveStraight(15, 30, false);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  //*/
+};
+//////////////////////////////////////////////////////right side auto, 
+void RightAuto(void) {
+  MoveStraight(31.25, 60, true);//move to the intake
+  toungue.set(true);
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  MoveTurning(90, 30);//turn towards it
+  wait(300, msec);
+  MoveFree(800, true, 35);//move in to it
+  MoveFree(3000, false, 25);//move directly backwards in to the goal
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
+  wait(2000, msec);
+  OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
+  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+  wait(300, msec);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  wait (2000, msec);//wait till all the balls are scored
+
+  //expirimental auto
+  /*MoveStraight(20.5, 40, true);//back out
+  OuttakeMotor.stop();
+  toungue.set(false);
+  MoveTurning(135, 30);//turn towards the group of 3
+  MoveStraight(53, 70, true);//run in to and intake them
+  toungue.set(true);
+  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+  OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+  //*/
+};
+//////////////////////////////////////////////////////skills auto, 
+void SkillsAuto(void) {
+   MoveStraight(31.25, 60, true);//move to the intake
+  toungue.set(true);
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  MoveTurning(-90, 30);//turn towards it
+  wait(300, msec);
+  MoveFree(800, true, 35);//move in to it
+  MoveFree(3000, false, 25);//move directly backwards in to the goal
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
+  wait(2000, msec);
+  OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
+  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+  wait(300, msec);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  wait (2000, msec);//wait till all the balls are scored
+  //move to the other side and align
+  MoveStraight(16, 40, true);
+  MoveTurning(-90, 30);
+  MoveStraight(110, 100, true);//move to the other side
+  MoveFree(1000, true, 30);
+  MoveStraight(13, 30, false);
+  MoveTurning(90, 30);
+  //otherside code
+   wait(300, msec);
+  MoveFree(800, true, 35);//move in to it
+  MoveFree(3000, false, 25);//move directly backwards in to the goal
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
+  wait(2000, msec);
+  OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
+  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+  wait(300, msec);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  wait (2000, msec);//wait till all the balls are scored
+
+};
 
 void autonomous(void) {
   // ..........................................................................
@@ -483,42 +580,12 @@ void autonomous(void) {
   RightMotor2.setStopping(brake);
   RightMotor3.setStopping(brake);
   OuttakeMotor.setStopping(coast);
-  toungue.set(false);
-  /////////////////////////////////////left side
   while (Inertial.isCalibrating()) {
     wait(20, msec);
   }
-  toungue.set(false);
-  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  MoveStraight(42, 50, true);
-  toungue.set(true);
-  MoveTurning(-135, 30);
-  MoveStraight(16, 30, false);
-  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  wait(300, msec);
-  OuttakeMotor.stop();
-  MoveStraight(49, 50, true);
-  MoveTurning(-45, 30);
-  MoveFree(3000, true, 25);
-  MoveFree(3000, false, 25);//move directly backwards in to the goal
-  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
-  wait(1000, msec);
-  OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
-  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
-  wait(500, msec);
-  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  /*MoveStraight(31.25, 60, true);//move to the intake
-  MoveTurning(-90, 30);//turn towards it
-  MoveFree(800, true, 35);//move in to it
-  MoveFree(3000, false, 25);//move directly backwards in to the goal
-  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
-  wait(1000, msec);
-  OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
-  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
-  wait(500, msec);
-  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);*/
+  ////the all important
+  LeftAuto();
+  
 
 }
 
@@ -546,9 +613,10 @@ void usercontrol(void) {
   bool L2pressed = false;
   bool R1pressed = false;
   bool R2pressed = false;
-  int systemState = 0;//0 is at rest, 1 is intaking, 2 is top outtaking, 3 is bottom outtaking
-  // User control code here, inside the loop
+  int systemState = 1;//0 is at rest, 1 is intaking, 2 is top outtaking, 3 is bottom outtaking
   int timer1 = 0;
+  toungue.set(true);
+  // User control code here, inside the loop
   while (1) {
     //Driving Control
     //controller dead zone
