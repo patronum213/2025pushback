@@ -478,7 +478,7 @@ void LeftAuto(void) {
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
   MoveTurning(-90, 30);//turn towards it
   wait(300, msec);
-  MoveFree(800, true, 35);//move in to it
+  MoveFree(650, true, 35);//move in to it
   MoveFree(3000, false, 25);//move directly backwards in to the goal
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
   wait(2000, msec);
@@ -488,6 +488,7 @@ void LeftAuto(void) {
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
   wait (2000, msec);//wait till all the balls are scored
+
 
   //expirimental auto
   /*MoveStraight(19, 40, true);//back out
@@ -508,7 +509,7 @@ void RightAuto(void) {
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
   MoveTurning(90, 30);//turn towards it
   wait(300, msec);
-  MoveFree(800, true, 35);//move in to it
+  MoveFree(650, true, 35);//move in to it
   MoveFree(3000, false, 25);//move directly backwards in to the goal
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
   wait(2000, msec);
@@ -518,6 +519,7 @@ void RightAuto(void) {
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
   wait (2000, msec);//wait till all the balls are scored
+
 
   //expirimental auto
   /*MoveStraight(20.5, 40, true);//back out
@@ -532,12 +534,12 @@ void RightAuto(void) {
 };
 //////////////////////////////////////////////////////skills auto, 
 void SkillsAuto(void) {
-   MoveStraight(31.25, 60, true);//move to the intake
+  MoveStraight(31, 60, true);//move to the intake
   toungue.set(true);
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  MoveTurning(-90, 30);//turn towards it
+  MoveTurning(90, 30);//turn towards it
   wait(300, msec);
-  MoveFree(800, true, 35);//move in to it
+  MoveFree(2000, true, 35);//move in to it
   MoveFree(3000, false, 25);//move directly backwards in to the goal
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
   wait(2000, msec);
@@ -546,17 +548,21 @@ void SkillsAuto(void) {
   wait(300, msec);
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  wait (2000, msec);//wait till all the balls are scored
+  wait (4000, msec);//wait till all the balls are scored
+  toungue.set(false);
   //move to the other side and align
   MoveStraight(16, 40, true);
   MoveTurning(-90, 30);
-  MoveStraight(110, 100, true);//move to the other side
+  MoveFree(2000, true, 30);
+  MoveStraight(120, 100, false);//move to the other side
+  MoveTurning(180, 30);
   MoveFree(1000, true, 30);
   MoveStraight(13, 30, false);
-  MoveTurning(90, 30);
+  MoveTurning(-90, 30);
+  toungue.set(true);
   //otherside code
-   wait(300, msec);
-  MoveFree(800, true, 35);//move in to it
+  wait(300, msec);
+  MoveFree(2000, true, 35);//move in to it
   MoveFree(3000, false, 25);//move directly backwards in to the goal
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
   wait(2000, msec);
@@ -567,6 +573,16 @@ void SkillsAuto(void) {
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
   wait (2000, msec);//wait till all the balls are scored
 
+  //expirimental
+  MoveStraight(19, 40, true);//back out
+  OuttakeMotor.stop();
+  toungue.set(false);
+  MoveTurning(-135, 30);//turn towards the group of 3
+  MoveStraight(34, 70, true);//run in to and intake them
+  MoveTurning(-175, 30);
+  toungue.set(true);
+  MoveStraight(15, 30, false);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
 };
 
 void autonomous(void) {
@@ -584,7 +600,7 @@ void autonomous(void) {
     wait(20, msec);
   }
   ////the all important
-  LeftAuto();
+  RightAuto();
   
 
 }
@@ -647,11 +663,11 @@ void usercontrol(void) {
     if (timer1 >= 0) {timer1 -= 1;};
     
     //descoring wings
-    if (Controller1.ButtonDown.pressing()) {leftWing.set(true);}
-    else {leftWing.set(false);};
+    if (Controller1.ButtonDown.pressing()) {leftWing.set(false);}
+    else {leftWing.set(true);};
     
-    if (Controller1.ButtonB.pressing()) {rightWing.set(true);}
-    else {rightWing.set(false);};
+    if (Controller1.ButtonB.pressing()) {rightWing.set(false);}
+    else {rightWing.set(true);};
 
     //toungue
     if (Controller1.ButtonR1.pressing() && !R1pressed) {
@@ -738,7 +754,7 @@ void usercontrol(void) {
 int main() {
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
-  Competition.drivercontrol(autonomous);//usercontrol
+  Competition.drivercontrol(usercontrol);//usercontrol
 
   // Run the pre-autonomous function.
   pre_auton();
