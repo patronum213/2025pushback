@@ -27,7 +27,8 @@ digital_out toungue = vex::digital_out(ThreeWirePort.A);
 digital_out leftWing = vex::digital_out(ThreeWirePort.B);
 digital_out rightWing = vex::digital_out(ThreeWirePort.C);
 
-rotation Odometry = rotation(PORT20, false);
+rotation leftOdometry = rotation(PORT20, false);
+rotation rightOdometry = rotation(PORT19, false);
 inertial Inertial = inertial(PORT16);
 
 void resetMotorEncoders(void) {
@@ -37,7 +38,8 @@ void resetMotorEncoders(void) {
   RightMotor1.resetPosition();
   RightMotor2.resetPosition();
   RightMotor3.resetPosition();
-  Odometry.resetPosition();
+  leftOdometry.resetPosition();
+  rightOdometry.resetPosition();
 };
 void setDriveMotorStopping(vex::brakeType type) {
   LeftMotor1.setStopping(type);
@@ -70,23 +72,23 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
   //gives us the final multiplier of 8.3775733333 inches per revolution
   //distance (in inches) is divided by wheel curcumfrence mutiplied by gear raito
   //TODO: switch this to pid for greater accuracy.
-  float tuningConstant = 0.713;
-  float gearingConstant = (3.0/4.0);
+  float tuningConstant = 1;
+  float gearingConstant = 1;
   float distanceRev = ((distance/6.28318)/gearingConstant);
   distanceRev *= tuningConstant;
   if (fowards) {
-    while (LeftMotor2.position(rev) < distanceRev or RightMotor2.position(rev) < distanceRev) {
-    float distanceTraveledPctLeft = (LeftMotor2.position(rev)/distanceRev)*100.0;
+    while (leftOdometry.position(rev) < distanceRev or rightOdometry.position(rev) < distanceRev) {
+    float distanceTraveledPctLeft = (leftOdometry.position(rev)/distanceRev)*100.0;
     float distributedSpeedLeft = distributeParabolically(distanceTraveledPctLeft/100.0)*100.0;
     float ajustedSpeedLeft = std::max((distributedSpeedLeft * (maxSpeed/100.0)), 10.0);
 
-    float distanceTraveledPctRight = (RightMotor2.position(rev)/distanceRev)*100.0;
+    float distanceTraveledPctRight = (rightOdometry.position(rev)/distanceRev)*100.0;
     float distributedSpeedRight = distributeParabolically(distanceTraveledPctRight/100.0)*100.0;
     float ajustedSpeedRight = std::max((distributedSpeedRight * (maxSpeed/100.0)), 10.0);
     Brain.Screen.setCursor(1, 1);
     Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
     Brain.Screen.setCursor(2, 1);
-    Brain.Screen.print("leftmotor2 %.2f  ", LeftMotor2.position(rev));
+    Brain.Screen.print("leftOdometry %.2f  ", leftOdometry.position(rev));
     Brain.Screen.setCursor(3, 1);
     Brain.Screen.print("distanceTraveledPctLeft = %.2f    ", distanceTraveledPctLeft);
     Brain.Screen.setCursor(4, 1);
@@ -94,7 +96,7 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
     Brain.Screen.setCursor(5, 1);
     Brain.Screen.print("ajustedSpeedLeft = %.2f    ", ajustedSpeedLeft);
     Brain.Screen.setCursor(6, 1);
-    Brain.Screen.print("Rightmotor2 %.2f  ", RightMotor2.position(rev));
+    Brain.Screen.print("rightOdometry %.2f  ", rightOdometry.position(rev));
     Brain.Screen.setCursor(7, 1);
     Brain.Screen.print("distanceTraveledPctRight = %.2f    ", distanceTraveledPctRight);
     Brain.Screen.setCursor(8, 1);
@@ -109,12 +111,12 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
     RightMotor1.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
     RightMotor2.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
     RightMotor3.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
-    if (LeftMotor2.position(rev) > distanceRev) {
+    if (leftOdometry.position(rev) > distanceRev) {
       LeftMotor1.stop(); 
       LeftMotor2.stop(); 
       LeftMotor3.stop();
     }
-    if (RightMotor2.position(rev) > distanceRev) {
+    if (rightOdometry.position(rev) > distanceRev) {
       RightMotor1.stop(); 
       RightMotor2.stop(); 
       RightMotor3.stop();
@@ -122,19 +124,19 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
     };
   }
   else if (!fowards) {
-    while (LeftMotor2.position(rev) > -distanceRev or RightMotor2.position(rev) > -distanceRev ) {
-    float distanceTraveledPctLeft = (LeftMotor2.position(rev)/distanceRev)*100.0;
+    while (leftOdometry.position(rev) > -distanceRev or rightOdometry.position(rev) > -distanceRev ) {
+    float distanceTraveledPctLeft = (leftOdometry.position(rev)/distanceRev)*100.0;
     float distributedSpeedLeft = distributeParabolically(-distanceTraveledPctLeft/100.0)*100.0;
     float ajustedSpeedLeft = std::max((distributedSpeedLeft * (maxSpeed/100.0)), 10.0);
 
-    float distanceTraveledPctRight = (RightMotor2.position(rev)/distanceRev)*100.0;
+    float distanceTraveledPctRight = (rightOdometry.position(rev)/distanceRev)*100.0;
     float distributedSpeedRight = distributeParabolically(-distanceTraveledPctRight/100.0)*100.0;
     float ajustedSpeedRight = std::max((distributedSpeedRight * (maxSpeed/100.0)), 10.0);
     
     Brain.Screen.setCursor(1, 1);
     Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
     Brain.Screen.setCursor(2, 1);
-    Brain.Screen.print("leftmotor2 %.2f  ", LeftMotor2.position(rev));
+    Brain.Screen.print("leftOdometry %.2f  ", leftOdometry.position(rev));
     Brain.Screen.setCursor(3, 1);
     Brain.Screen.print("distanceTraveledPctLeft = %.2f    ", distanceTraveledPctLeft);
     Brain.Screen.setCursor(4, 1);
@@ -142,7 +144,7 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
     Brain.Screen.setCursor(5, 1);
     Brain.Screen.print("ajustedSpeedLeft = %.2f    ", ajustedSpeedLeft);
     Brain.Screen.setCursor(6, 1);
-    Brain.Screen.print("Rightmotor2 %.2f  ", RightMotor2.position(rev));
+    Brain.Screen.print("rightOdometry %.2f  ", rightOdometry.position(rev));
     Brain.Screen.setCursor(7, 1);
     Brain.Screen.print("distanceTraveledPctRight = %.2f    ", distanceTraveledPctRight);
     Brain.Screen.setCursor(8, 1);
@@ -156,12 +158,12 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
     RightMotor1.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
     RightMotor2.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
     RightMotor3.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
-    if (LeftMotor2.position(rev) < -distanceRev) {
+    if (leftOdometry.position(rev) < -distanceRev) {
       LeftMotor1.stop(); 
       LeftMotor2.stop(); 
       LeftMotor3.stop();
     }
-    if (RightMotor2.position(rev) < -distanceRev) {
+    if (rightOdometry.position(rev) < -distanceRev) {
       RightMotor1.stop(); 
       RightMotor2.stop(); 
       RightMotor3.stop();
