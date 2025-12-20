@@ -24,12 +24,13 @@ competition Competition;
 // define your global instances of motors and other devices here
 triport ThreeWirePort = vex::triport( vex::PORT22 );
 digital_out toungue = vex::digital_out(ThreeWirePort.A);
-digital_out leftWing = vex::digital_out(ThreeWirePort.B);
-digital_out rightWing = vex::digital_out(ThreeWirePort.C);
+digital_out ramp = vex::digital_out(ThreeWirePort.B);
+digital_out wing = vex::digital_out(ThreeWirePort.C);
+digital_out odometryWheels = vex::digital_out(ThreeWirePort.D);
 
-rotation leftOdometry = rotation(PORT20, false);
-rotation rightOdometry = rotation(PORT19, false);
-inertial Inertial = inertial(PORT16);
+rotation leftOdometry = rotation(PORT5, true);
+rotation rightOdometry = rotation(PORT4, false);
+inertial Inertial = inertial(PORT11);
 
 void resetMotorEncoders(void) {
   LeftMotor1.resetPosition(); 
@@ -58,10 +59,10 @@ float distributeParabolically (float input) {
   return ((-3.5*std::pow((input-0.5), 2)) + 1);//-3.5 is the curving varible, power starts at 1/n%
 };
 //made for joystick curving, takes input of 0-1, works both ways
-float distributeExponentially (float input) {
+float distributeExponentially (float input, float tuning = 1.001) {//increasing tuning makes curve steeper
   return (input > 0 ? 
-  (std::pow(1.025, 100*input)-1)/(std::pow(1.025, 100)-1):
-  -(std::pow(1.025, std::abs(100*input))-1)/(std::pow(1.025, 100)-1)
+  (std::pow(tuning, 100*input)-1)/(std::pow(tuning, 100)-1):
+  -(std::pow(tuning, std::abs(100*input))-1)/(std::pow(tuning, 100)-1)
   );
 };
 //distance, maxSpeed, fowards
@@ -72,7 +73,7 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
   //gives us the final multiplier of 8.3775733333 inches per revolution
   //distance (in inches) is divided by wheel curcumfrence mutiplied by gear raito
   //TODO: switch this to pid for greater accuracy.
-  float tuningConstant = 1;
+  float tuningConstant = 0.99;
   float gearingConstant = 1;
   float distanceRev = ((distance/6.28318)/gearingConstant);
   distanceRev *= tuningConstant;
@@ -475,18 +476,19 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 //////////////////////////////////////////////////////left side auto, 
 void LeftAuto(void) {
-  MoveStraight(31.25, 60, true);//move to the intake
+  MoveStraight(31, 70, true);//move to the intake
   toungue.set(true);
+  ramp.set(true);
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  MoveTurning(-90, 30);//turn towards it
-  wait(300, msec);
-  MoveFree(650, true, 35);//move in to it
-  MoveFree(3000, false, 25);//move directly backwards in to the goal
+  MoveTurning(-90, 40);//turn towards it
+  wait(100, msec);
+  MoveFree(800, true, 45);//move in to it
+  MoveFree(1800, false, 50);//move directly backwards in to the goal
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
-  wait(2000, msec);
+  wait(800, msec);
   OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
   IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
-  wait(300, msec);
+  wait(200, msec);
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
   wait (2000, msec);//wait till all the balls are scored
@@ -506,21 +508,23 @@ void LeftAuto(void) {
 };
 //////////////////////////////////////////////////////right side auto, 
 void RightAuto(void) {
-  MoveStraight(31.25, 60, true);//move to the intake
+  MoveStraight(31, 70, true);//move to the intake
   toungue.set(true);
+  ramp.set(true);
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  MoveTurning(90, 30);//turn towards it
-  wait(300, msec);
-  MoveFree(650, true, 35);//move in to it
-  MoveFree(3000, false, 25);//move directly backwards in to the goal
+  MoveTurning(90, 40);//turn towards it
+  wait(100, msec);
+  MoveFree(800, true, 45);//move in to it
+  MoveFree(1800, false, 50);//move directly backwards in to the goal
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
-  wait(2000, msec);
+  wait(800, msec);
   OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
   IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
-  wait(300, msec);
+  wait(200, msec);
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
   wait (2000, msec);//wait till all the balls are scored
+
 
 
   //expirimental auto
@@ -598,6 +602,7 @@ void autonomous(void) {
   RightMotor2.setStopping(brake);
   RightMotor3.setStopping(brake);
   OuttakeMotor.setStopping(coast);
+  odometryWheels.set(true);
   while (Inertial.isCalibrating()) {
     wait(20, msec);
   }
@@ -625,22 +630,23 @@ void usercontrol(void) {
   RightMotor2.setStopping(coast);
   RightMotor3.setStopping(coast);
   OuttakeMotor.setStopping(coast);
+  odometryWheels.set(false);//retract odometry wheels
+  toungue.set(true);
   float FBsensitivity = 1.0;
-  float LRsensitivity = 0.6;
+  float LRsensitivity = 0.4;
   bool L1pressed = false;
   bool L2pressed = false;
-  bool R1pressed = false;
   bool R2pressed = false;
+  bool R1pressed = false;
   int systemState = 1;//0 is at rest, 1 is intaking, 2 is top outtaking, 3 is bottom outtaking
   int timer1 = 0;
-  toungue.set(true);
   // User control code here, inside the loop
   while (1) {
     //Driving Control
     //controller dead zone
     int deadzonepct  = 10;
-    float Axis3 = Controller1.Axis3.position(percent);
-    float Axis1 = Controller1.Axis1.position(percent);
+    float Axis3 = Controller1.Axis3.position(percent);// left/right
+    float Axis1 = Controller1.Axis1.position(percent);// fwd/back
     float Axis3Dead = Axis3 > deadzonepct ? ((Axis3 - deadzonepct)*1.00/(100-deadzonepct))*100 : 
     Axis3Dead = Axis3 < -deadzonepct ? ((Axis3 + deadzonepct)*1.00/(100-deadzonepct))*100 : 0;
     float Axis1Dead = Axis1 > deadzonepct ? ((Axis1 - deadzonepct)*1.00/(100-deadzonepct))*100 : 
@@ -664,12 +670,51 @@ void usercontrol(void) {
 
     if (timer1 >= 0) {timer1 -= 1;};
     
-    //descoring wings
-    if (Controller1.ButtonDown.pressing()) {leftWing.set(false);}
-    else {leftWing.set(true);};
     
-    if (Controller1.ButtonB.pressing()) {rightWing.set(false);}
-    else {rightWing.set(true);};
+    
+    //top outtaking
+    if (Controller1.ButtonL1.pressing() && !L1pressed) {
+      /*if (systemState == 2) {systemState = 0;}
+      //else {systemState = 2; toungue.set(true);}
+      //brief backtake to loosen balls
+      else {systemState = 3; timer1 = 2;}
+      */
+      systemState = 3; timer1 = 2;
+      L1pressed = true;
+    }
+    if (!Controller1.ButtonL1.pressing()) {
+      L1pressed = false;
+    };
+    //down outtaking
+    if (Controller1.ButtonL2.pressing() && !L2pressed) {
+      if (systemState == 3) {systemState=0; toungue.set(false);}
+      else {systemState = 3; toungue.set(true);}
+      L2pressed = true;
+    }
+    if (!Controller1.ButtonL2.pressing()) {
+      L2pressed = false;
+    };
+    //brief backtake to loosen balls
+    if (timer1 == 0) {systemState = 2;}
+
+
+    //intaking
+    if (Controller1.ButtonR2.pressing() && !R2pressed) {
+      if (systemState == 1) {systemState=0;}
+      else {systemState = 1;}
+      R2pressed = true;
+    }
+    if (!Controller1.ButtonR2.pressing()) {
+      R2pressed = false;
+    };
+    
+    //descoring wing
+    if (Controller1.ButtonB.pressing()) {wing.set(true);}
+    else {wing.set(false);};
+    
+    //outtaking level, true (top level) by default 
+    if (Controller1.ButtonDown.pressing()) {ramp.set(false);}
+    else {ramp.set(true);};
 
     //toungue
     if (Controller1.ButtonR1.pressing() && !R1pressed) {
@@ -680,39 +725,11 @@ void usercontrol(void) {
     if (!Controller1.ButtonR1.pressing()) {
       R1pressed = false;
     };
-    
-    //down outtaking
-    if (Controller1.ButtonL1.pressing() && !L1pressed) {
-      if (systemState == 3) {systemState = 0; toungue.set(false);}
-      else {systemState = 3; toungue.set(true);}
-      L1pressed = true;
-    }
-    if (!Controller1.ButtonL1.pressing()) {
-      L1pressed = false;
-    };
-    //top outtaking
-    if (Controller1.ButtonL2.pressing() && !L2pressed) {
-      if (systemState == 2) {systemState=0;}
-      else {systemState = 3; timer1 = 2;}
-      L2pressed = true;
-    }
-    if (!Controller1.ButtonL2.pressing()) {
-      L2pressed = false;
-    };
-    if (timer1 == 0) {systemState = 2;}
-    //intaking
-    if (Controller1.ButtonR2.pressing() && !R2pressed) {
-      if (systemState == 1) {systemState=0;}
-      else {systemState = 1;}
-      R2pressed = true;
-    }
-    if (!Controller1.ButtonR2.pressing()) {
-      R2pressed = false;
-    };
 
     if (Controller1.ButtonA.pressing()) {
       systemState = 0;
     }
+
 
     switch (systemState) {
       case 3://down outtaking
@@ -737,11 +754,11 @@ void usercontrol(void) {
     
 
     Controller1.Screen.setCursor(1, 1);
-    Controller1.Screen.print(IntakeMotor.temperature(pct));
+    Controller1.Screen.print(leftOdometry.position(rev));
     Controller1.Screen.setCursor(1, 9);
     Controller1.Screen.print(Inertial.isCalibrating());
     Controller1.Screen.setCursor(1, 17);
-    Controller1.Screen.print(OuttakeMotor.temperature(pct));
+    Controller1.Screen.print(rightOdometry.position(rev));
 
 
 
@@ -756,7 +773,7 @@ void usercontrol(void) {
 int main() {
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
-  Competition.drivercontrol(usercontrol);//usercontrol
+  Competition.drivercontrol(autonomous);//usercontrol
 
   // Run the pre-autonomous function.
   pre_auton();
