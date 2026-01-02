@@ -339,6 +339,128 @@ void TurnWithRatio(float distance, int maxSpeed, double LeftToRightRatio, bool f
   //turn with ratio uses the ratio of left wheel power to right wheel power to determine direction
   //if LtoRratio is greater than 1, it turns right, less than one and it turns left
   //ratios should be given in fractions anyway to help keep track of turns 
+  //odometry wheels are 2 inches in diameter, times pi means curcumernce is 6.28318 in
+  //with 1:1 gearing
+  //gives us the final multiplier of 6.28318 inches per revolution
+  //TODO: switch this to pid for greater accuracy.
+  float tuningConstant = 0.99;
+  float gearingConstant = 1;
+  float distanceRev = ((distance/6.28318)/gearingConstant);
+  distanceRev *= tuningConstant;
+  float leftSideMultiplier = 1;
+  float rightSideMultiplier = 1;
+    if (LeftToRightRatio > 1) {
+      if (1/LeftToRightRatio <= 0.00001) {rightSideMultiplier = 0;}
+      else {rightSideMultiplier = 1/LeftToRightRatio;}
+    }
+    else if (LeftToRightRatio < 1) {
+      leftSideMultiplier = LeftToRightRatio;
+    };
+    float distanceRevRight = distanceRev*rightSideMultiplier;
+    float distanceRevLeft = distanceRev*leftSideMultiplier;
+
+    
+
+    if (fowards) {
+      while (leftOdometry.position(rev) < distanceRevLeft or rightOdometry.position(rev) < rightSideMultiplier) {
+      float distanceTraveledPctLeft = (leftOdometry.position(rev)/distanceRevLeft)*100.0;
+      float distributedSpeedLeft = distributeParabolically(distanceTraveledPctLeft/100.0)*100.0;
+      float ajustedSpeedLeft = std::max((distributedSpeedLeft * ((maxSpeed)/100.0)), 10.0);
+
+      float distanceTraveledPctRight = (rightOdometry.position(rev)/distanceRevRight)*100.0;
+      float distributedSpeedRight = distributeParabolically(distanceTraveledPctRight/100.0)*100.0;
+      float ajustedSpeedRight = std::max((distributedSpeedRight * ((maxSpeed)/100.0)), 10.0);
+      Brain.Screen.setCursor(1, 1);
+      Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
+      Brain.Screen.setCursor(2, 1);
+      Brain.Screen.print("leftOdometry %.2f  ", leftOdometry.position(rev));
+      Brain.Screen.setCursor(3, 1);
+      Brain.Screen.print("distanceTraveledPctLeft = %.2f    ", distanceTraveledPctLeft);
+      Brain.Screen.setCursor(4, 1);
+      Brain.Screen.print("distributedSpeedLeft %.2f  ", distributedSpeedLeft);
+      Brain.Screen.setCursor(5, 1);
+      Brain.Screen.print("ajustedSpeedLeft = %.2f    ", ajustedSpeedLeft);
+      Brain.Screen.setCursor(6, 1);
+      Brain.Screen.print("rightOdometry %.2f  ", rightOdometry.position(rev));
+      Brain.Screen.setCursor(7, 1);
+      Brain.Screen.print("distanceTraveledPctRight = %.2f    ", distanceTraveledPctRight);
+      Brain.Screen.setCursor(8, 1);
+      Brain.Screen.print("distributedSpeedRight %.2f  ", distributedSpeedRight);
+      Brain.Screen.setCursor(9, 1);
+      Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
+
+
+      LeftMotor1.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
+      LeftMotor2.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
+      LeftMotor3.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
+      RightMotor1.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
+      RightMotor2.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
+      RightMotor3.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
+      if (leftOdometry.position(rev) > distanceRevLeft) {
+        LeftMotor1.stop(); 
+        LeftMotor2.stop(); 
+        LeftMotor3.stop();
+      }
+      if (rightOdometry.position(rev) > distanceRevRight) {
+        RightMotor1.stop(); 
+        RightMotor2.stop(); 
+        RightMotor3.stop();
+      }
+      };
+    }
+    else if (!fowards) {
+      while (leftOdometry.position(rev) > -distanceRevLeft or rightOdometry.position(rev) > -rightSideMultiplier ) {
+      float distanceTraveledPctLeft = (leftOdometry.position(rev)/distanceRevLeft)*100.0;
+      float distributedSpeedLeft = distributeParabolically(-distanceTraveledPctLeft/100.0)*100.0;
+      float ajustedSpeedLeft = std::max((distributedSpeedLeft * ((maxSpeed)/100.0)), 10.0);
+      
+      float distanceTraveledPctRight = (rightOdometry.position(rev)/distanceRevRight)*100.0;
+      float distributedSpeedRight = distributeParabolically(-distanceTraveledPctRight/100.0)*100.0;
+      float ajustedSpeedRight = std::max((distributedSpeedRight * ((maxSpeed)/100.0)), 10.0);
+      
+      Brain.Screen.setCursor(1, 1);
+      Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
+      Brain.Screen.setCursor(2, 1);
+      Brain.Screen.print("leftOdometry %.2f  ", leftOdometry.position(rev));
+      Brain.Screen.setCursor(3, 1);
+      Brain.Screen.print("distanceTraveledPctLeft = %.2f    ", distanceTraveledPctLeft);
+      Brain.Screen.setCursor(4, 1);
+      Brain.Screen.print("distributedSpeedLeft %.2f  ", distributedSpeedLeft);
+      Brain.Screen.setCursor(5, 1);
+      Brain.Screen.print("ajustedSpeedLeft = %.2f    ", ajustedSpeedLeft);
+      Brain.Screen.setCursor(6, 1);
+      Brain.Screen.print("rightOdometry %.2f  ", rightOdometry.position(rev));
+      Brain.Screen.setCursor(7, 1);
+      Brain.Screen.print("distanceTraveledPctRight = %.2f    ", distanceTraveledPctRight);
+      Brain.Screen.setCursor(8, 1);
+      Brain.Screen.print("distributedSpeedRight %.2f  ", distributedSpeedRight);
+      Brain.Screen.setCursor(9, 1);
+      Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
+
+      LeftMotor1.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
+      LeftMotor2.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
+      LeftMotor3.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
+      RightMotor1.spin(directionType::rev, ajustedSpeedRight, velocityUnits::pct);
+      RightMotor2.spin(directionType::rev, ajustedSpeedRight, velocityUnits::pct);
+      RightMotor3.spin(directionType::rev, ajustedSpeedRight, velocityUnits::pct);
+      if (leftOdometry.position(rev) < -distanceRevLeft) {
+        LeftMotor1.stop(); 
+        LeftMotor2.stop(); 
+        LeftMotor3.stop();
+      }
+      if (rightOdometry.position(rev) < -distanceRevRight) {
+        RightMotor1.stop(); 
+        RightMotor2.stop(); 
+        RightMotor3.stop();
+      }
+      };
+    }
+};
+void TurnWithRatioOld(float distance, int maxSpeed, double LeftToRightRatio, bool fowards) {
+  resetMotorEncoders();
+  //turn with ratio uses the ratio of left wheel power to right wheel power to determine direction
+  //if LtoRratio is greater than 1, it turns right, less than one and it turns left
+  //ratios should be given in fractions anyway to help keep track of turns 
   //TODO: switch this to pid for greater accuracy.
   float tuningConstant = 1;
   float gearingConstant = 3.0/4.0;
@@ -509,7 +631,8 @@ void LeftAutoExpirimental(void) {
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtaking to the middle
   wait(2000, msec);//wait to finish outtaking
   OuttakeMotor.stop();
-  MoveStraight(48, 70, true); //move to alignment with the chute
+  //TurnWithRatio(48, 60, 4, true);//move to alignment with the chute
+  MoveStraight(48, 60, true); //move to alignment with the chute
   MoveTurning(45, 30);//turn towards it
   wait(100, msec);//wait to finish turning
   /*toungue.set(true);//put tounge out
@@ -633,7 +756,6 @@ void autonomous(void) {
   }
   ////the all important
   LeftAutoExpirimental();
-  
 
 }
 
