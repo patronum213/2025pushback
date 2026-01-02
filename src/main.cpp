@@ -497,13 +497,24 @@ void LeftAuto(void) {
   //*/
 };
 void LeftAutoExpirimental(void) {
-  MoveStraight(31.25, 65, true);//move to the intake
-  toungue.set(true);
-  ramp.set(true);
+  //temp inverted because of the half field
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  MoveTurning(-90, 30);//turn towards it
-  wait(100, msec);
-  MoveFree(800, true, 45);//move in to it
+  toungue.set(false);
+  ramp.set(false);
+  MoveStraight(33, 70, true);//move in to and intake the center cluster 
+  toungue.set(true);
+  MoveTurning(85, 30);//turn towards the middle goal
+  wait(100, msec);//wati to finish turning
+  MoveStraight(13, 40, false);//move to it
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtaking to the middle
+  wait(2000, msec);//wait to finish outtaking
+  OuttakeMotor.stop();
+  MoveStraight(48, 70, true); //move to alignment with the chute
+  MoveTurning(45, 30);//turn towards it
+  wait(100, msec);//wait to finish turning
+  /*toungue.set(true);//put tounge out
+  ramp.set(true);
+  MoveFree(1000, true, 50);//move in to it
   MoveFree(1800, false, 50);//move directly backwards in to the goal
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
   wait(800, msec);
@@ -513,19 +524,6 @@ void LeftAutoExpirimental(void) {
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
   wait (2000, msec);//wait till all the balls are scored
-
-
-  //expirimental auto
-  toungue.set(false);
-  MoveStraight(20, 55, true);//back out
-  OuttakeMotor.stop();
-  MoveTurning(-135, 40);//turn towards the group of 3
-  MoveStraight(34, 70, true);//run in to and intake them
-  MoveTurning(-175, 50);//turn around
-  toungue.set(true);//put the tounge down to make sure they don't get away
-  ramp.set(false);//switch to middle level scoring
-  MoveStraight(15, 40, false);//move in to the goal
-  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
   //*/
 };
 //////////////////////////////////////////////////////right side auto, 
@@ -634,7 +632,7 @@ void autonomous(void) {
     wait(20, msec);
   }
   ////the all important
-  LeftAuto();
+  LeftAutoExpirimental();
   
 
 }
@@ -800,7 +798,7 @@ void usercontrol(void) {
 int main() {
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
-  Competition.drivercontrol(usercontrol);//usercontrol
+  Competition.drivercontrol(autonomous);//usercontrol
 
   // Run the pre-autonomous function.
   pre_auton();
