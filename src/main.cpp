@@ -799,8 +799,8 @@ void usercontrolChris(void) {
     float Axis1Dead = Axis1 > deadzonepct ? ((Axis1 - deadzonepct)*1.00/(100-deadzonepct))*100 : 
     Axis1Dead = Axis1 < -deadzonepct ? ((Axis1 + deadzonepct)*1.00/(100-deadzonepct))*100 : 0;
     //joystick curve, taking place after deadzoning
-    float Axis1Curved = distributeExponentially(Axis1Dead/100.0)*100.0;
-    float Axis3Curved = distributeExponentially(Axis3Dead/100.0)*100.0;
+    float Axis1Curved = distributeExponentially(Axis1Dead/100.0, 1.0001)*100.0;
+    float Axis3Curved = distributeExponentially(Axis3Dead/100.0, 1.0001)*100.0;
     //sensitivity
     Axis1Curved *= LRsensitivity;
     Axis3Curved *= FBsensitivity;
@@ -929,6 +929,7 @@ void usercontrolElliot(void) {
   bool L2pressed = false;
   bool R1pressed = false;
   bool R2pressed = false;
+  bool Bpressed = false;
 
   int systemState = 1;//0 is at rest, 1 is intaking, 2 is top outtaking, 3 is bottom outtaking
   int timer1 = 0;
@@ -945,8 +946,8 @@ void usercontrolElliot(void) {
     float Axis1Dead = Axis1 > deadzonepct ? ((Axis1 - deadzonepct)*1.00/(100-deadzonepct))*100 : 
     Axis1Dead = Axis1 < -deadzonepct ? ((Axis1 + deadzonepct)*1.00/(100-deadzonepct))*100 : 0;
     //joystick curve, taking place after deadzoning
-    float Axis1Curved = distributeExponentially(Axis1Dead/100.0)*100.0;
-    float Axis3Curved = distributeExponentially(Axis3Dead/100.0)*100.0;
+    float Axis1Curved = distributeExponentially(Axis1Dead/100.0, 1.025)*100.0;
+    float Axis3Curved = distributeExponentially(Axis3Dead/100.0, 1.025)*100.0;
     //sensitivity
     Axis1Curved *= LRsensitivity;
     Axis3Curved *= FBsensitivity;
@@ -963,49 +964,18 @@ void usercontrolElliot(void) {
 
     if (timer1 >= 0) {timer1 -= 1;};
     
-    //descoring wings
-    /*if (Controller1.ButtonDown.pressing()) {leftWing.set(false);}
-    else {leftWing.set(true);};
-    
-    if (Controller1.ButtonB.pressing()) {rightWing.set(false);}
-    else {rightWing.set(true);};
-    */
+    //descoring wing
+    if (Controller1.ButtonDown.pressing()) {wing.set(true);}
+    else {wing.set(false);};
     //toungue
-    if (Controller1.ButtonR1.pressing() && !R1pressed) {
+    if (Controller1.ButtonB.pressing() && !Bpressed) {
       if (toungue.value()) {toungue.set(false);}
       else {toungue.set(true);}
-      R1pressed = true;
+      Bpressed = true;
     }
-    if (!Controller1.ButtonR1.pressing()) {
-      R1pressed = false;
+    if (!Controller1.ButtonB.pressing()) {
+      Bpressed = false;
     };
-    
-    //down outtaking
-    if (Controller1.ButtonL1.pressing() && !L1pressed) {
-      if (systemState == 3) {systemState = 0; toungue.set(false);}
-      else {systemState = 3; toungue.set(true);}
-
-
-
-
-      L1pressed = true;
-    }
-    if (!Controller1.ButtonL1.pressing()) {
-      L1pressed = false;
-    };
-    //top outtaking
-    if (Controller1.ButtonL2.pressing() && !L2pressed) {
-      if (systemState == 2) {systemState=0;}
-      else {systemState = 3; timer1 = 2;}
-      L2pressed = true;
-    }
-    if (!Controller1.ButtonL2.pressing()) {
-      L2pressed = false;
-    };
-
-    if (timer1 == 0) {systemState = 2;}
-
-
     //intaking
     if (Controller1.ButtonR2.pressing() && !R2pressed) {
       if (systemState == 1) {systemState=0;}
@@ -1015,23 +985,33 @@ void usercontrolElliot(void) {
     if (!Controller1.ButtonR2.pressing()) {
       R2pressed = false;
     };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    //down outtaking
+    if (Controller1.ButtonR1.pressing() && !R1pressed) {
+      if (systemState == 4) {systemState=0;}
+      else {systemState = 4;}
+      R1pressed = true;
+    }
+    if (!Controller1.ButtonR2.pressing()) {
+      R1pressed = false;
+    };
+    //middle outtaking
+    if (Controller1.ButtonL1.pressing() && !L1pressed) {
+      if (systemState == 3) {systemState=0;}
+      else {systemState = 3;}
+      L2pressed = true;
+    }
+    if (!Controller1.ButtonL1.pressing()) {
+      L1pressed = false;
+    };
+    //top outtaking
+    if (Controller1.ButtonL2.pressing() && !L2pressed) {
+      if (systemState == 2) {systemState=0;}
+      else {systemState = 2;}
+      L2pressed = true;
+    }
+    if (!Controller1.ButtonR2.pressing()) {
+      L2pressed = false;
+    };
 
 
     if (Controller1.ButtonA.pressing()) {
@@ -1040,13 +1020,19 @@ void usercontrolElliot(void) {
 
 
     switch (systemState) {
-      case 3://down outtaking
+      case 4://down outtaking
       IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
       OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+      break; 
+      case 3://middle outtaking
+      IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+      OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+      ramp.set(false);
       break; 
       case 2://top outtaking
       IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
       OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+      ramp.set(true);
       break; 
       case 1://intaking
       IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
