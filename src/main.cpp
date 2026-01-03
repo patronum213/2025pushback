@@ -344,16 +344,16 @@ void TurnWithRatio(float distance, int maxSpeed, double LeftToRightRatio, bool f
   //gives us the final multiplier of 6.28318 inches per revolution
   //TODO: switch this to pid for greater accuracy.
   float tuningConstant = 0.99;
-  float gearingConstant = 1;
+  float gearingConstant = 1.00;
   float distanceRev = ((distance/6.28318)/gearingConstant);
   distanceRev *= tuningConstant;
-  float leftSideMultiplier = 1;
-  float rightSideMultiplier = 1;
-    if (LeftToRightRatio > 1) {
+  float leftSideMultiplier = 1.00;
+  float rightSideMultiplier = 1.00;
+    if (LeftToRightRatio > 1.00) {
       if (1/LeftToRightRatio <= 0.00001) {rightSideMultiplier = 0;}
       else {rightSideMultiplier = 1/LeftToRightRatio;}
     }
-    else if (LeftToRightRatio < 1) {
+    else if (LeftToRightRatio < 1.00) {
       leftSideMultiplier = LeftToRightRatio;
     };
     float distanceRevRight = distanceRev*rightSideMultiplier;
@@ -362,14 +362,14 @@ void TurnWithRatio(float distance, int maxSpeed, double LeftToRightRatio, bool f
     
 
     if (fowards) {
-      while (leftOdometry.position(rev) < distanceRevLeft or rightOdometry.position(rev) < rightSideMultiplier) {
+      while (leftOdometry.position(rev) < distanceRevLeft or rightOdometry.position(rev) < distanceRevRight) {
       float distanceTraveledPctLeft = (leftOdometry.position(rev)/distanceRevLeft)*100.0;
       float distributedSpeedLeft = distributeParabolically(distanceTraveledPctLeft/100.0)*100.0;
-      float ajustedSpeedLeft = std::max((distributedSpeedLeft * ((maxSpeed)/100.0)), 10.0);
+      float ajustedSpeedLeft = std::max((distributedSpeedLeft * ((maxSpeed*leftSideMultiplier)/100.0)), 10.0);
 
       float distanceTraveledPctRight = (rightOdometry.position(rev)/distanceRevRight)*100.0;
       float distributedSpeedRight = distributeParabolically(distanceTraveledPctRight/100.0)*100.0;
-      float ajustedSpeedRight = std::max((distributedSpeedRight * ((maxSpeed)/100.0)), 10.0);
+      float ajustedSpeedRight = std::max((distributedSpeedRight * ((maxSpeed*rightSideMultiplier)/100.0)), 10.0);
       Brain.Screen.setCursor(1, 1);
       Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
       Brain.Screen.setCursor(2, 1);
@@ -388,8 +388,8 @@ void TurnWithRatio(float distance, int maxSpeed, double LeftToRightRatio, bool f
       Brain.Screen.print("distributedSpeedRight %.2f  ", distributedSpeedRight);
       Brain.Screen.setCursor(9, 1);
       Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
-
-
+      ajustedSpeedLeft = 30*1.5;
+      ajustedSpeedRight = 30;
       LeftMotor1.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
       LeftMotor2.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
       LeftMotor3.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
@@ -409,14 +409,14 @@ void TurnWithRatio(float distance, int maxSpeed, double LeftToRightRatio, bool f
       };
     }
     else if (!fowards) {
-      while (leftOdometry.position(rev) > -distanceRevLeft or rightOdometry.position(rev) > -rightSideMultiplier ) {
+      while (leftOdometry.position(rev) > -distanceRevLeft or rightOdometry.position(rev) > -distanceRevRight ) {
       float distanceTraveledPctLeft = (leftOdometry.position(rev)/distanceRevLeft)*100.0;
       float distributedSpeedLeft = distributeParabolically(-distanceTraveledPctLeft/100.0)*100.0;
-      float ajustedSpeedLeft = std::max((distributedSpeedLeft * ((maxSpeed)/100.0)), 10.0);
+      float ajustedSpeedLeft = std::max((distributedSpeedLeft * ((maxSpeed*leftSideMultiplier)/100.0)), 10.0);
       
       float distanceTraveledPctRight = (rightOdometry.position(rev)/distanceRevRight)*100.0;
       float distributedSpeedRight = distributeParabolically(-distanceTraveledPctRight/100.0)*100.0;
-      float ajustedSpeedRight = std::max((distributedSpeedRight * ((maxSpeed)/100.0)), 10.0);
+      float ajustedSpeedRight = std::max((distributedSpeedRight * ((maxSpeed*rightSideMultiplier)/100.0)), 10.0);
       
       Brain.Screen.setCursor(1, 1);
       Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
@@ -436,7 +436,8 @@ void TurnWithRatio(float distance, int maxSpeed, double LeftToRightRatio, bool f
       Brain.Screen.print("distributedSpeedRight %.2f  ", distributedSpeedRight);
       Brain.Screen.setCursor(9, 1);
       Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
-
+      ajustedSpeedLeft = 30;
+      ajustedSpeedRight = 30;
       LeftMotor1.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
       LeftMotor2.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
       LeftMotor3.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
@@ -625,20 +626,54 @@ void LeftAutoExpirimental(void) {
   ramp.set(false);
   MoveStraight(33, 70, true);//move in to and intake the center cluster 
   toungue.set(true);
-  MoveTurning(85, 30);//turn towards the middle goal
-  wait(100, msec);//wati to finish turning
-  MoveStraight(13, 40, false);//move to it
+  MoveTurning(-85, 30);//turn towards the middle goal
+  wait(300, msec);//wait to finish turning
+  MoveStraight(13.5, 40, false);//move to it
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtaking to the middle
   wait(2000, msec);//wait to finish outtaking
   OuttakeMotor.stop();
-  //TurnWithRatio(48, 60, 4, true);//move to alignment with the chute
-  MoveStraight(48, 60, true); //move to alignment with the chute
-  MoveTurning(45, 30);//turn towards it
+  //TurnWithRatio(48, 60, 1.5, true);//move to alignment with the chute
+  
+
+  float distanceRev = 5.9;
+  float maxSpeed = 70;
+  float rightMult = 1.04;
+  while (leftOdometry.position(rev) < distanceRev or rightOdometry.position(rev) < distanceRev) {
+    float distanceTraveledPctLeft = (leftOdometry.position(rev)/distanceRev)*100.0;
+    float distributedSpeedLeft = distributeParabolically(distanceTraveledPctLeft/100.0)*100.0;
+    float ajustedSpeedLeft = std::max((distributedSpeedLeft * (maxSpeed/100.0)), 10.0);
+
+    float distanceTraveledPctRight = (rightOdometry.position(rev)/(distanceRev*rightMult))*100.0;
+    float distributedSpeedRight = distributeParabolically(distanceTraveledPctRight/100.0)*100.0;
+    float ajustedSpeedRight = std::max((distributedSpeedRight * (maxSpeed/100.0)), 10.0);
+
+
+    float fixedSpeed = 30; 
+    LeftMotor1.spin(directionType::fwd, fixedSpeed, velocityUnits::pct); 
+    LeftMotor2.spin(directionType::fwd, fixedSpeed, velocityUnits::pct); 
+    LeftMotor3.spin(directionType::fwd, fixedSpeed, velocityUnits::pct);
+    RightMotor1.spin(directionType::fwd, fixedSpeed*rightMult, velocityUnits::pct);
+    RightMotor2.spin(directionType::fwd, fixedSpeed*rightMult, velocityUnits::pct);
+    RightMotor3.spin(directionType::fwd, fixedSpeed*rightMult, velocityUnits::pct);
+    if (leftOdometry.position(rev) > distanceRev) {
+      LeftMotor1.stop(); 
+      LeftMotor2.stop(); 
+      LeftMotor3.stop();
+    }
+    if (rightOdometry.position(rev) > distanceRev*rightMult) {
+      RightMotor1.stop(); 
+      RightMotor2.stop(); 
+      RightMotor3.stop();
+    }
+    };
+
+  //MoveStraight(48, 60, true); //move to alignment with the chute
+  MoveTurning(-45, 30);//turn towards it
   wait(100, msec);//wait to finish turning
-  /*toungue.set(true);//put tounge out
+  toungue.set(true);//put tounge out
   ramp.set(true);
   MoveFree(1000, true, 50);//move in to it
-  MoveFree(1800, false, 50);//move directly backwards in to the goal
+  MoveFree(1000, false, 50);//move directly backwards in to the goal
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
   wait(800, msec);
   OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
@@ -683,13 +718,16 @@ void RightAuto(void) {
 };
 //////////////////////////////////////////////////////skills auto, 
 void SkillsAuto(void) {
-  MoveStraight(31.25, 65, true);//move to the intake
+  MoveStraight(31.3, 65, true);//move to the intake
   toungue.set(true);
   ramp.set(true);
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
   MoveTurning(90, 30);//turn towards it
   wait(100, msec);
-  MoveFree(1500, true, 45);//move in to it
+  MoveFree(1000, true, 45);//move in to it
+  OuttakeMotor.spin(directionType::fwd, 30, velocityUnits::pct);
+  MoveFree(500, true, 45);//move in to it
+  OuttakeMotor.stop();
   wait(700, msec);
   MoveFree(1800, false, 50);//move directly backwards in to the goal
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
@@ -706,10 +744,10 @@ void SkillsAuto(void) {
   OuttakeMotor.stop();
   MoveTurning(-90, 30);
   MoveFree(2000, true, 30);
-  MoveStraight(120, 100, false);//move to the other side
+  MoveStraight(110, 100, false);//move to the other side
   MoveTurning(180, 30);
   MoveFree(1000, true, 30);
-  MoveStraight(13, 30, false);
+  MoveStraight(12.6, 30, false);
   MoveTurning(-90, 30);
   toungue.set(true);
   //otherside code
@@ -724,10 +762,14 @@ void SkillsAuto(void) {
   wait(200, msec);
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  wait (2000, msec);//wait till all the balls are scored
-
+  wait(2000, msec);//wait till all the balls are scored
+  MoveStraight(10, 30, true);
+  MoveTurning(135, 30);
+  MoveFree(4000, true, 30);
+  toungue.set(true);
+  MoveFree(3000, true, 100);
   //expirimental auto
-  MoveStraight(21, 55, true);//back out
+  /*MoveStraight(21, 55, true);//back out
   OuttakeMotor.stop();
   toungue.set(false);
   MoveTurning(-135, 40);//turn towards the group of 3
@@ -736,9 +778,78 @@ void SkillsAuto(void) {
   toungue.set(true);//put the tounge down to make sure they don't get away
   ramp.set(false);//switch to middle level scoring
   MoveStraight(14, 40, false);//move in to the goal
-  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);*/
 };
+void SkillsAuto2(void) {
+  MoveStraight(31.3, 65, true);//move to the intake
+  toungue.set(true);
+  ramp.set(true);
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  MoveTurning(90, 30);//turn towards it
+  wait(100, msec);
+  MoveFree(1000, true, 45);//move in to it
+  OuttakeMotor.spin(directionType::fwd, 30, velocityUnits::pct);
+  MoveFree(500, true, 45);//move in to it
+  OuttakeMotor.stop();
+  wait(700, msec);
+  /*MoveFree(1800, false, 50);//move directly backwards in to the goal
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
+  wait(800, msec);
+  OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
+  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+  wait(200, msec);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  wait (2000, msec);//wait till all the balls are scored
+  //move to the other side and align
+  MoveStraight(16, 40, true);
+  OuttakeMotor.stop();*/
+  toungue.set(false);//instead of scoring, them simply move out and begin moving to the otherside
+  MoveStraight(15, 40, false);
+  MoveTurning(-90, 30);
+  MoveFree(2000, true, 30);
 
+  //divergence point <-- wrong
+
+  MoveStraight(4, 20, false);//move away from the wall
+  MoveTurning(-90, 30);//turn totheotherside
+  MoveStraight(100, 100, true);//move to the othe side
+  MoveFree(1000, true, 50);
+  MoveStraight(16, 30, false);
+  MoveTurning(-90, 30);
+  MoveStraight(15, 30, true);
+  MoveTurning(90, 30);
+
+  MoveFree(1800, false, 50);//move directly backwards in to the goal
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
+  wait(800, msec);
+  OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
+  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+  wait(200, msec);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  wait (3000, msec);//wait till all the balls are scored
+  OuttakeMotor.stop();
+
+  MoveFree(1200, true, 45);//move in to the chute
+  OuttakeMotor.spin(directionType::fwd, 30, velocityUnits::pct);
+  MoveFree(500, true, 45);//move in to it
+  OuttakeMotor.stop();
+  wait(700, msec);
+  MoveFree(1800, false, 50);//move directly backwards in to the goal
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
+  wait(800, msec);
+  OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
+  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+  wait(200, msec);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  wait (2000, msec);//wait till all the balls are scored
+  toungue.set(false);
+
+
+
+};
 void autonomous(void) {
   // ..........................................................................
   // Insert autonomous user code here.
@@ -755,6 +866,7 @@ void autonomous(void) {
     wait(20, msec);
   }
   ////the all important
+  //TurnWithRatio(48, 60, 1.5, true);
   LeftAutoExpirimental();
 
 }
@@ -1005,13 +1117,17 @@ void usercontrolElliot(void) {
     };
     //top outtaking
     if (Controller1.ButtonL2.pressing() && !L2pressed) {
+      //systemState = 4; timer1 = 2;
       if (systemState == 2) {systemState=0;}
       else {systemState = 2;}
+      
       L2pressed = true;
     }
     if (!Controller1.ButtonR2.pressing()) {
       L2pressed = false;
     };
+    //brief backtake to loosen balls
+    //if (timer1 == 0) {systemState = 2;}
 
 
     if (Controller1.ButtonA.pressing()) {
@@ -1067,7 +1183,7 @@ void usercontrolElliot(void) {
 int main() {
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
-  Competition.drivercontrol(usercontrolElliot);//usercontrol
+  Competition.drivercontrol(autonomous);//usercontrol
 
   // Run the pre-autonomous function.
   pre_auton();
