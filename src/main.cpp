@@ -769,7 +769,7 @@ void autonomous(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
-void usercontrol(void) {
+void usercontrolChris(void) {
   LeftMotor1.setStopping(coast); 
   LeftMotor2.setStopping(coast); 
   LeftMotor3.setStopping(coast);
@@ -913,6 +913,167 @@ void usercontrol(void) {
                     // prevent wasted resources.
   }
 }
+void usercontrolElliot(void) {
+  LeftMotor1.setStopping(coast); 
+  LeftMotor2.setStopping(coast); 
+  LeftMotor3.setStopping(coast);
+  RightMotor1.setStopping(coast);
+  RightMotor2.setStopping(coast);
+  RightMotor3.setStopping(coast);
+  OuttakeMotor.setStopping(coast);
+  odometryWheels.set(false);//retract odometry wheels
+  toungue.set(true);
+  float FBsensitivity = 1.0;
+  float LRsensitivity = 0.6;
+  bool L1pressed = false;
+  bool L2pressed = false;
+  bool R1pressed = false;
+  bool R2pressed = false;
+
+  int systemState = 1;//0 is at rest, 1 is intaking, 2 is top outtaking, 3 is bottom outtaking
+  int timer1 = 0;
+  toungue.set(true);
+  // User control code here, inside the loop
+  while (1) {
+    //Driving Control
+    //controller dead zone
+    int deadzonepct  = 10;
+    float Axis3 = Controller1.Axis3.position(percent);
+    float Axis1 = Controller1.Axis1.position(percent);
+    float Axis3Dead = Axis3 > deadzonepct ? ((Axis3 - deadzonepct)*1.00/(100-deadzonepct))*100 : 
+    Axis3Dead = Axis3 < -deadzonepct ? ((Axis3 + deadzonepct)*1.00/(100-deadzonepct))*100 : 0;
+    float Axis1Dead = Axis1 > deadzonepct ? ((Axis1 - deadzonepct)*1.00/(100-deadzonepct))*100 : 
+    Axis1Dead = Axis1 < -deadzonepct ? ((Axis1 + deadzonepct)*1.00/(100-deadzonepct))*100 : 0;
+    //joystick curve, taking place after deadzoning
+    float Axis1Curved = distributeExponentially(Axis1Dead/100.0)*100.0;
+    float Axis3Curved = distributeExponentially(Axis3Dead/100.0)*100.0;
+    //sensitivity
+    Axis1Curved *= LRsensitivity;
+    Axis3Curved *= FBsensitivity;
+    //set motor powers
+    int leftsidepower = (Axis3Curved + Axis1Curved);
+    int rightsidepower = (Axis3Curved - Axis1Curved);
+    LeftMotor1.spin(directionType::fwd, leftsidepower, velocityUnits::pct); 
+    LeftMotor2.spin(directionType::fwd, leftsidepower, velocityUnits::pct); 
+    LeftMotor3.spin(directionType::fwd, leftsidepower, velocityUnits::pct);
+    RightMotor1.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
+    RightMotor2.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
+    RightMotor3.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
+    
+
+    if (timer1 >= 0) {timer1 -= 1;};
+    
+    //descoring wings
+    /*if (Controller1.ButtonDown.pressing()) {leftWing.set(false);}
+    else {leftWing.set(true);};
+    
+    if (Controller1.ButtonB.pressing()) {rightWing.set(false);}
+    else {rightWing.set(true);};
+    */
+    //toungue
+    if (Controller1.ButtonR1.pressing() && !R1pressed) {
+      if (toungue.value()) {toungue.set(false);}
+      else {toungue.set(true);}
+      R1pressed = true;
+    }
+    if (!Controller1.ButtonR1.pressing()) {
+      R1pressed = false;
+    };
+    
+    //down outtaking
+    if (Controller1.ButtonL1.pressing() && !L1pressed) {
+      if (systemState == 3) {systemState = 0; toungue.set(false);}
+      else {systemState = 3; toungue.set(true);}
+
+
+
+
+      L1pressed = true;
+    }
+    if (!Controller1.ButtonL1.pressing()) {
+      L1pressed = false;
+    };
+    //top outtaking
+    if (Controller1.ButtonL2.pressing() && !L2pressed) {
+      if (systemState == 2) {systemState=0;}
+      else {systemState = 3; timer1 = 2;}
+      L2pressed = true;
+    }
+    if (!Controller1.ButtonL2.pressing()) {
+      L2pressed = false;
+    };
+
+    if (timer1 == 0) {systemState = 2;}
+
+
+    //intaking
+    if (Controller1.ButtonR2.pressing() && !R2pressed) {
+      if (systemState == 1) {systemState=0;}
+      else {systemState = 1;}
+      R2pressed = true;
+    }
+    if (!Controller1.ButtonR2.pressing()) {
+      R2pressed = false;
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    if (Controller1.ButtonA.pressing()) {
+      systemState = 0;
+    }
+
+
+    switch (systemState) {
+      case 3://down outtaking
+      IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+      OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+      break; 
+      case 2://top outtaking
+      IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+      OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+      break; 
+      case 1://intaking
+      IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+      OuttakeMotor.stop();
+      break; 
+      case 0:
+      default: 
+      IntakeMotor.stop();
+      OuttakeMotor.stop();
+      break;
+    }
+
+    
+
+    Controller1.Screen.setCursor(1, 1);
+    Controller1.Screen.print(IntakeMotor.temperature(pct));
+    Controller1.Screen.setCursor(1, 9);
+    Controller1.Screen.print(Inertial.isCalibrating());
+    Controller1.Screen.setCursor(1, 17);
+    Controller1.Screen.print(OuttakeMotor.temperature(pct));
+
+
+
+    wait(10, msec); // Sleep the task for a short amount of time to
+                    // prevent wasted resources.
+  }
+}
 
 //
 // Main will set up the competition functions and callbacks.
@@ -920,7 +1081,7 @@ void usercontrol(void) {
 int main() {
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
-  Competition.drivercontrol(autonomous);//usercontrol
+  Competition.drivercontrol(usercontrolElliot);//usercontrol
 
   // Run the pre-autonomous function.
   pre_auton();
