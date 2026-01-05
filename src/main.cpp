@@ -1050,12 +1050,19 @@ void usercontrolChris(void) {
 
     
 
+    float avgDriveHeat = 
+    (LeftMotor1.temperature(pct)+
+    LeftMotor2.temperature(pct)+
+    LeftMotor3.temperature(pct)+
+    RightMotor1.temperature(pct)+
+    RightMotor2.temperature(pct)+
+    RightMotor3.temperature(pct))/6;
     Controller1.Screen.setCursor(1, 1);
-    Controller1.Screen.print(leftOdometry.position(rev));
+    Controller1.Screen.print(IntakeMotor.temperature(pct));
     Controller1.Screen.setCursor(1, 9);
-    Controller1.Screen.print(Inertial.isCalibrating());
+    Controller1.Screen.print(avgDriveHeat);
     Controller1.Screen.setCursor(1, 17);
-    Controller1.Screen.print(rightOdometry.position(rev));
+    Controller1.Screen.print(OuttakeMotor.temperature(pct));
 
 
 
@@ -1155,17 +1162,17 @@ void usercontrolElliot(void) {
     };
     //top outtaking
     if (Controller1.ButtonL2.pressing() && !L2pressed) {
-      //systemState = 4; timer1 = 2;
-      if (systemState == 2) {systemState=0;}
+      systemState = 4; timer1 = 2;
+      /*if (systemState == 2) {systemState=0;}
       else {systemState = 2;}
-      
+      */
       L2pressed = true;
     }
     if (!Controller1.ButtonR2.pressing()) {
       L2pressed = false;
     };
     //brief backtake to loosen balls
-    //if (timer1 == 0) {systemState = 2;}
+    if (timer1 == 0) {systemState = 2;}
 
 
     if (Controller1.ButtonA.pressing()) {
@@ -1190,7 +1197,9 @@ void usercontrolElliot(void) {
       break; 
       case 1://intaking
       IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-      OuttakeMotor.stop();
+      OuttakeMotor.spin(directionType::fwd, 15, velocityUnits::pct);
+      ramp.set(true);
+      //OuttakeMotor.stop();
       break; 
       case 0:
       default: 
@@ -1200,14 +1209,32 @@ void usercontrolElliot(void) {
     }
 
     
-
+    float avgDriveHeat = 
+    (LeftMotor1.temperature(pct)+
+    LeftMotor2.temperature(pct)+
+    LeftMotor3.temperature(pct)+
+    RightMotor1.temperature(pct)+
+    RightMotor2.temperature(pct)+
+    RightMotor3.temperature(pct))/6;
     Controller1.Screen.setCursor(1, 1);
     Controller1.Screen.print(IntakeMotor.temperature(pct));
     Controller1.Screen.setCursor(1, 9);
-    Controller1.Screen.print(Inertial.isCalibrating());
+    Controller1.Screen.print(avgDriveHeat);
     Controller1.Screen.setCursor(1, 17);
     Controller1.Screen.print(OuttakeMotor.temperature(pct));
 
+    Brain.Screen.setCursor(1, 1);
+    Brain.Screen.print("left1 = %.2f    ", LeftMotor1.torque(Nm));
+    Brain.Screen.setCursor(2, 1);
+    Brain.Screen.print("left2 = %.2f    ", LeftMotor2.torque(Nm));
+    Brain.Screen.setCursor(3, 1);
+    Brain.Screen.print("left3 = %.2f    ", LeftMotor3.torque(Nm));
+    Brain.Screen.setCursor(4, 1);
+    Brain.Screen.print("right1 = %.2f    ", RightMotor1.torque(Nm));
+    Brain.Screen.setCursor(5, 1);
+    Brain.Screen.print("right2 = %.2f    ", RightMotor2.torque(Nm));
+    Brain.Screen.setCursor(6, 1);
+    Brain.Screen.print("right3 = %.2f    ", RightMotor3.torque(Nm));
 
 
     wait(10, msec); // Sleep the task for a short amount of time to
