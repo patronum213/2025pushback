@@ -73,19 +73,25 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
   //gives us the final multiplier of 8.3775733333 inches per revolution
   //distance (in inches) is divided by wheel curcumfrence mutiplied by gear raito
   //TODO: switch this to pid for greater accuracy.
-  float tuningConstant = 0.99;
-  float gearingConstant = 1;
+  float tuningConstant = 0.99;//tuning modifier for distance  
+  float gearingConstant = 1;//gear ratio
+  double tolerancePct = 5;//PID tolerance 
+  double increment = 0.25;//PID increment
+
   float distanceRev = ((distance/6.28318)/gearingConstant);
   distanceRev *= tuningConstant;
   if (fowards) {
     while (leftOdometry.position(rev) < distanceRev or rightOdometry.position(rev) < distanceRev) {
     float distanceTraveledPctLeft = (leftOdometry.position(rev)/distanceRev)*100.0;
     float distributedSpeedLeft = distributeParabolically(distanceTraveledPctLeft/100.0)*100.0;
-    float ajustedSpeedLeft = std::max((distributedSpeedLeft * (maxSpeed/100.0)), 10.0);
+    float cappedSpeedLeft = std::max((distributedSpeedLeft * (maxSpeed/100.0)), 10.0);
+    float ajustedSpeedLeft = cappedSpeedLeft;
 
     float distanceTraveledPctRight = (rightOdometry.position(rev)/distanceRev)*100.0;
     float distributedSpeedRight = distributeParabolically(distanceTraveledPctRight/100.0)*100.0;
-    float ajustedSpeedRight = std::max((distributedSpeedRight * (maxSpeed/100.0)), 10.0);
+    float cappedSpeedRight = std::max((distributedSpeedRight * (maxSpeed/100.0)), 10.0);
+    float ajustedSpeedRight = cappedSpeedRight; 
+
     Brain.Screen.setCursor(1, 1);
     Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
     Brain.Screen.setCursor(2, 1);
@@ -105,7 +111,25 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
     Brain.Screen.setCursor(9, 1);
     Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
 
-
+    if ((LeftMotor1.velocity(pct) - RightMotor1.velocity(pct)) < -tolerancePct) {
+      if (ajustedSpeedLeft >= cappedSpeedLeft) {
+        ajustedSpeedRight = ajustedSpeedRight - increment;
+      }
+      else {
+        ajustedSpeedLeft = ajustedSpeedLeft + increment;
+      }
+    }
+    else if ((RightMotor1.velocity(pct) - LeftMotor1.velocity(pct)) < -tolerancePct) {
+      if (ajustedSpeedRight >= cappedSpeedRight) {
+        ajustedSpeedLeft = ajustedSpeedLeft - increment;
+      }
+      else {
+        ajustedSpeedRight = ajustedSpeedRight + increment;
+      }
+    }
+    ajustedSpeedRight = std::min(ajustedSpeedRight, cappedSpeedRight);
+    ajustedSpeedLeft = std::min(ajustedSpeedLeft, cappedSpeedLeft);
+    
     LeftMotor1.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
     LeftMotor2.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
     LeftMotor3.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
@@ -905,8 +929,8 @@ void autonomous(void) {
     wait(20, msec);
   }
   ////the all important
-  LeftAuto();
-
+  //LeftAuto();
+  MoveStraight(24, 30, true);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -1162,7 +1186,7 @@ void usercontrolElliot(void) {
     };
     //top outtaking
     if (Controller1.ButtonL2.pressing() && !L2pressed) {
-      systemState = 4; timer1 = 2;
+      systemState = 4; timer1 = 1;
       /*if (systemState == 2) {systemState=0;}
       else {systemState = 2;}
       */
@@ -1197,8 +1221,8 @@ void usercontrolElliot(void) {
       break; 
       case 1://intaking
       IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-      OuttakeMotor.spin(directionType::fwd, 15, velocityUnits::pct);
-      ramp.set(true);
+      OuttakeMotor.spin(directionType::fwd, 8, velocityUnits::pct);
+      ramp.set(false);
       //OuttakeMotor.stop();
       break; 
       case 0:
