@@ -27,6 +27,7 @@ digital_out toungue = vex::digital_out(ThreeWirePort.A);
 digital_out ramp = vex::digital_out(ThreeWirePort.B);
 digital_out wing = vex::digital_out(ThreeWirePort.C);
 digital_out odometryWheels = vex::digital_out(ThreeWirePort.D);
+digital_in limitSwitch = vex::digital_in(ThreeWirePort.E);
 
 rotation leftOdometry = rotation(PORT5, true);
 rotation rightOdometry = rotation(PORT4, false);
@@ -979,14 +980,14 @@ void usercontrolChris(void) {
     Axis1Curved *= LRsensitivity;
     Axis3Curved *= FBsensitivity;
     //set motor powers
-    int leftsidepower = (Axis3Curved + Axis1Curved);
-    int rightsidepower = (Axis3Curved - Axis1Curved);
-    LeftMotor1.spin(directionType::fwd, leftsidepower, velocityUnits::pct); 
-    LeftMotor2.spin(directionType::fwd, leftsidepower, velocityUnits::pct); 
-    LeftMotor3.spin(directionType::fwd, leftsidepower, velocityUnits::pct);
-    RightMotor1.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
-    RightMotor2.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
-    RightMotor3.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
+    int LeftSidePower = (Axis3Curved + Axis1Curved);
+    int RightSidePower = (Axis3Curved - Axis1Curved);
+    LeftMotor1.spin(directionType::fwd, LeftSidePower, velocityUnits::pct); 
+    LeftMotor2.spin(directionType::fwd, LeftSidePower, velocityUnits::pct); 
+    LeftMotor3.spin(directionType::fwd, LeftSidePower, velocityUnits::pct);
+    RightMotor1.spin(directionType::fwd, RightSidePower, velocityUnits::pct);
+    RightMotor2.spin(directionType::fwd, RightSidePower, velocityUnits::pct);
+    RightMotor3.spin(directionType::fwd, RightSidePower, velocityUnits::pct);
     
 
     if (timer1 >= 0) {timer1 -= 1;};
@@ -1106,6 +1107,11 @@ void usercontrolElliot(void) {
   toungue.set(true);
   float FBsensitivity = 1.0;
   float LRsensitivity = 0.6;
+  float PIDIncrement = 0.25;
+  float PIDTolerancePct = 5;
+
+  float LeftSidePower = 0.0;
+  float RightSidePower = 0.0;
   bool L1pressed = false;
   bool L2pressed = false;
   bool R1pressed = false;
@@ -1133,14 +1139,36 @@ void usercontrolElliot(void) {
     Axis1Curved *= LRsensitivity;
     Axis3Curved *= FBsensitivity;
     //set motor powers
-    int leftsidepower = (Axis3Curved + Axis1Curved);
-    int rightsidepower = (Axis3Curved - Axis1Curved);
-    LeftMotor1.spin(directionType::fwd, leftsidepower, velocityUnits::pct); 
-    LeftMotor2.spin(directionType::fwd, leftsidepower, velocityUnits::pct); 
-    LeftMotor3.spin(directionType::fwd, leftsidepower, velocityUnits::pct);
-    RightMotor1.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
-    RightMotor2.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
-    RightMotor3.spin(directionType::fwd, rightsidepower, velocityUnits::pct);
+    LeftSidePower = (Axis3Curved + Axis1Curved);
+    RightSidePower = (Axis3Curved - Axis1Curved);
+    if (abs(Axis3Dead) > 0 && abs(Axis1Dead) > 0) {//if we're not turning, use PID to make sure the robot driving straight
+      float basePower = Axis3Curved;
+      float RightSidePower = Axis3Curved;
+      float LeftSidePower = Axis3Curved;
+      if ((LeftMotor1.velocity(pct) - RightMotor1.velocity(pct)) < -PIDTolerancePct) {
+        if (LeftSidePower >= basePower) {
+          RightSidePower -= PIDIncrement;
+        }
+        else {
+          LeftSidePower += PIDIncrement;
+        }
+      }
+      else if ((RightMotor1.velocity(pct) - LeftMotor1.velocity(pct)) < -PIDTolerancePct) {
+        if (RightSidePower >= basePower) {
+          LeftSidePower -= PIDIncrement;
+        }
+        else {
+          RightSidePower += PIDIncrement;
+        }
+      }
+    }
+
+    LeftMotor1.spin(directionType::fwd, LeftSidePower, velocityUnits::pct); 
+    LeftMotor2.spin(directionType::fwd, LeftSidePower, velocityUnits::pct); 
+    LeftMotor3.spin(directionType::fwd, LeftSidePower, velocityUnits::pct);
+    RightMotor1.spin(directionType::fwd, RightSidePower, velocityUnits::pct);
+    RightMotor2.spin(directionType::fwd, RightSidePower, velocityUnits::pct);
+    RightMotor3.spin(directionType::fwd, RightSidePower, velocityUnits::pct);
     
 
     if (timer1 >= 0) {timer1 -= 1;};
@@ -1221,7 +1249,8 @@ void usercontrolElliot(void) {
       break; 
       case 1://intaking
       IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-      OuttakeMotor.spin(directionType::fwd, 8, velocityUnits::pct);
+      if (limitSwitch) {OuttakeMotor.spin(directionType::fwd, 8, velocityUnits::pct);}
+      else {}
       ramp.set(false);
       //OuttakeMotor.stop();
       break; 
