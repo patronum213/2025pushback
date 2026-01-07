@@ -1117,6 +1117,7 @@ void usercontrolElliot(void) {
   bool R1pressed = false;
   bool R2pressed = false;
   bool Bpressed = false;
+  bool Downpressed = false;
 
   int systemState = 1;//0 is at rest, 1 is intaking, 2 is top outtaking, 3 is bottom outtaking
   int timer1 = 0;
@@ -1145,20 +1146,21 @@ void usercontrolElliot(void) {
       float basePower = Axis3Curved;
       float RightSidePower = Axis3Curved;
       float LeftSidePower = Axis3Curved;
-      if ((LeftMotor1.velocity(pct) - RightMotor1.velocity(pct)) < -PIDTolerancePct) {
-        if (LeftSidePower >= basePower) {
-          RightSidePower -= PIDIncrement;
+      float PIDIncrementSigned = Axis3Curved >= 0 ? PIDIncrement : -PIDIncrement; 
+      if ((abs(LeftMotor1.velocity(pct)) - abs(RightMotor1.velocity(pct))) < -PIDTolerancePct) {
+        if (abs(LeftSidePower) >= basePower) {
+          RightSidePower -= PIDIncrementSigned;
         }
         else {
-          LeftSidePower += PIDIncrement;
+          LeftSidePower += PIDIncrementSigned;
         }
       }
-      else if ((RightMotor1.velocity(pct) - LeftMotor1.velocity(pct)) < -PIDTolerancePct) {
-        if (RightSidePower >= basePower) {
-          LeftSidePower -= PIDIncrement;
+      else if ((abs(RightMotor1.velocity(pct)) - abs(LeftMotor1.velocity(pct))) < -PIDTolerancePct) {
+        if (abs(RightSidePower) >= basePower) {
+          LeftSidePower -= PIDIncrementSigned;
         }
         else {
-          RightSidePower += PIDIncrement;
+          RightSidePower += PIDIncrementSigned;
         }
       }
     }
@@ -1174,8 +1176,14 @@ void usercontrolElliot(void) {
     if (timer1 >= 0) {timer1 -= 1;};
     
     //descoring wing
-    if (Controller1.ButtonDown.pressing()) {wing.set(true);}
-    else {wing.set(false);};
+    if (Controller1.ButtonDown.pressing() && !Downpressed) {
+      if (wing.value()) {wing.set(false);}
+      else {wing.set(true);}
+      Downpressed = true;
+    }
+    if (!Controller1.ButtonDown.pressing()) {
+      Downpressed = false;
+    };
     //toungue
     if (Controller1.ButtonB.pressing() && !Bpressed) {
       if (toungue.value()) {toungue.set(false);}
@@ -1226,11 +1234,9 @@ void usercontrolElliot(void) {
     //brief backtake to loosen balls
     if (timer1 == 0) {systemState = 2;}
 
-
     if (Controller1.ButtonA.pressing()) {
       systemState = 0;
     }
-
 
     switch (systemState) {
       case 4://down outtaking
@@ -1249,7 +1255,7 @@ void usercontrolElliot(void) {
       break; 
       case 1://intaking
       IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-      if (limitSwitch) {OuttakeMotor.spin(directionType::fwd, 8, velocityUnits::pct);}
+      if (limitSwitch) {OuttakeMotor.spin(directionType::fwd, 10, velocityUnits::pct);}
       else {}
       ramp.set(false);
       //OuttakeMotor.stop();
