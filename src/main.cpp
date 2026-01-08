@@ -74,70 +74,82 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
   //gives us the final multiplier of 8.3775733333 inches per revolution
   //distance (in inches) is divided by wheel curcumfrence mutiplied by gear raito
   //TODO: switch this to pid for greater accuracy.
-  float tuningConstant = 0.99;//tuning modifier for distance  
+  float tuningConstant = 0.955;//tuning modifier for distance  
   float gearingConstant = 1;//gear ratio
-  double tolerancePct = 5;//PID tolerance 
+  double toleranceDeg = 1;//PID tolerance, in degrees
   double increment = 0.25;//PID increment
 
   float distanceRev = ((distance/6.28318)/gearingConstant);
   distanceRev *= tuningConstant;
   if (fowards) {
-    while (leftOdometry.position(rev) < distanceRev or rightOdometry.position(rev) < distanceRev) {
+    while (leftOdometry.position(rev) < distanceRev or rightOdometry.position(rev) < distanceRev /*||
+    (rightOdometry.position(deg) - leftOdometry.position(deg)) < -toleranceDeg ||
+    (leftOdometry.position(deg) - rightOdometry.position(deg)) < -toleranceDeg*/
+    ) {
+    
+    
     float distanceTraveledPctLeft = (leftOdometry.position(rev)/distanceRev)*100.0;
-    float distributedSpeedLeft = distributeParabolically(distanceTraveledPctLeft/100.0)*100.0;
-    float cappedSpeedLeft = std::max((distributedSpeedLeft * (maxSpeed/100.0)), 10.0);
-    float ajustedSpeedLeft = cappedSpeedLeft;
-
     float distanceTraveledPctRight = (rightOdometry.position(rev)/distanceRev)*100.0;
-    float distributedSpeedRight = distributeParabolically(distanceTraveledPctRight/100.0)*100.0;
-    float cappedSpeedRight = std::max((distributedSpeedRight * (maxSpeed/100.0)), 10.0);
-    float ajustedSpeedRight = cappedSpeedRight; 
+    float distanceTraveledPctAvg = (distanceTraveledPctLeft+distanceTraveledPctRight)/2;
+    float distributedSpeed = distributeParabolically(distanceTraveledPctAvg/100.0)*100.0;
+    float cappedSpeed = std::max((distributedSpeed * (maxSpeed/100.0)), 10.0);
+    float ajustedSpeedLeft = cappedSpeed;
+    float ajustedSpeedRight = cappedSpeed;
+    
 
-    Brain.Screen.setCursor(1, 1);
-    Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
-    Brain.Screen.setCursor(2, 1);
-    Brain.Screen.print("leftOdometry %.2f  ", leftOdometry.position(rev));
-    Brain.Screen.setCursor(3, 1);
-    Brain.Screen.print("distanceTraveledPctLeft = %.2f    ", distanceTraveledPctLeft);
-    Brain.Screen.setCursor(4, 1);
-    Brain.Screen.print("distributedSpeedLeft %.2f  ", distributedSpeedLeft);
-    Brain.Screen.setCursor(5, 1);
-    Brain.Screen.print("ajustedSpeedLeft = %.2f    ", ajustedSpeedLeft);
-    Brain.Screen.setCursor(6, 1);
-    Brain.Screen.print("rightOdometry %.2f  ", rightOdometry.position(rev));
-    Brain.Screen.setCursor(7, 1);
-    Brain.Screen.print("distanceTraveledPctRight = %.2f    ", distanceTraveledPctRight);
-    Brain.Screen.setCursor(8, 1);
-    Brain.Screen.print("distributedSpeedRight %.2f  ", distributedSpeedRight);
-    Brain.Screen.setCursor(9, 1);
-    Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
-
-    if ((LeftMotor1.velocity(pct) - RightMotor1.velocity(pct)) < -tolerancePct) {
-      if (ajustedSpeedLeft >= cappedSpeedLeft) {
+    if ((leftOdometry.position(deg) - rightOdometry.position(deg)) < -toleranceDeg) {
+      if (ajustedSpeedLeft >= cappedSpeed) {
         ajustedSpeedRight = ajustedSpeedRight - increment;
       }
       else {
         ajustedSpeedLeft = ajustedSpeedLeft + increment;
       }
     }
-    else if ((RightMotor1.velocity(pct) - LeftMotor1.velocity(pct)) < -tolerancePct) {
-      if (ajustedSpeedRight >= cappedSpeedRight) {
+    else if ((rightOdometry.position(deg) - leftOdometry.position(deg)) < -toleranceDeg) {
+      if (ajustedSpeedRight >= cappedSpeed) {
         ajustedSpeedLeft = ajustedSpeedLeft - increment;
       }
       else {
         ajustedSpeedRight = ajustedSpeedRight + increment;
       }
     }
-    ajustedSpeedRight = std::min(ajustedSpeedRight, cappedSpeedRight);
-    ajustedSpeedLeft = std::min(ajustedSpeedLeft, cappedSpeedLeft);
+    ajustedSpeedRight = std::min(ajustedSpeedRight, cappedSpeed);
+    ajustedSpeedLeft = std::min(ajustedSpeedLeft, cappedSpeed);
     
+    Brain.Screen.setCursor(1, 1);
+    Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
+    Brain.Screen.setCursor(2, 1);
+    Brain.Screen.print("leftOdometry %.2f  ", leftOdometry.position(rev));
+    Brain.Screen.setCursor(3, 1);
+    Brain.Screen.print("ajustedSpeedLeft = %.2f    ", ajustedSpeedLeft);
+    Brain.Screen.setCursor(4, 1);
+    Brain.Screen.print("rightOdometry %.2f  ", rightOdometry.position(rev));
+    Brain.Screen.setCursor(5, 1);
+    Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
+    Brain.Screen.setCursor(6, 1);
+    Brain.Screen.print("distanceTraveledPctAvg = %.2f    ", distanceTraveledPctAvg);
+    if (abs(distanceTraveledPctAvg - 50) < 0.1) {
+    Brain.Screen.setCursor(7, 1);
+    Brain.Screen.print("mid left = %.2f    ", leftOdometry.position(rev));
+    Brain.Screen.setCursor(8, 1);
+    Brain.Screen.print("mid right = %.2f    ", rightOdometry.position(rev));
+    }
+
     LeftMotor1.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
     LeftMotor2.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
     LeftMotor3.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
-    RightMotor1.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
-    RightMotor2.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
-    RightMotor3.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
-    if (leftOdometry.position(rev) > distanceRev) {
+    RightMotor1.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
+    RightMotor2.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
+    RightMotor3.spin(directionType::fwd, ajustedSpeedRight, velocityUnits::pct);
+    if (leftOdometry.position(rev) > distanceRev || rightOdometry.position(rev) > distanceRev) {
+      LeftMotor1.stop(); 
+      LeftMotor2.stop(); 
+      LeftMotor3.stop();
+      RightMotor1.stop(); 
+      RightMotor2.stop(); 
+      RightMotor3.stop();
+    }
+    /*if (leftOdometry.position(rev) > distanceRev) {
       LeftMotor1.stop(); 
       LeftMotor2.stop(); 
       LeftMotor3.stop();
@@ -146,50 +158,42 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
       RightMotor1.stop(); 
       RightMotor2.stop(); 
       RightMotor3.stop();
-    }
-    };
+    }*/
+  }
   }
   else if (!fowards) {
     while (leftOdometry.position(rev) > -distanceRev or rightOdometry.position(rev) > -distanceRev ) {
     float distanceTraveledPctLeft = (leftOdometry.position(rev)/distanceRev)*100.0;
-    float distributedSpeedLeft = distributeParabolically(-distanceTraveledPctLeft/100.0)*100.0;
-    float ajustedSpeedLeft = std::max((distributedSpeedLeft * (maxSpeed/100.0)), 10.0);
-
     float distanceTraveledPctRight = (rightOdometry.position(rev)/distanceRev)*100.0;
-    float distributedSpeedRight = distributeParabolically(-distanceTraveledPctRight/100.0)*100.0;
-    float ajustedSpeedRight = std::max((distributedSpeedRight * (maxSpeed/100.0)), 10.0);
+    float distanceTraveledPctAvg = (distanceTraveledPctLeft+distanceTraveledPctRight)/2;
+    float distributedSpeed = distributeParabolically(-distanceTraveledPctAvg/100.0)*100.0;
+    float cappedSpeed = std::max((distributedSpeed * (maxSpeed/100.0)), 10.0);
+    float ajustedSpeedLeft = cappedSpeed;
+    float ajustedSpeedRight = cappedSpeed;
     
     Brain.Screen.setCursor(1, 1);
     Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
     Brain.Screen.setCursor(2, 1);
     Brain.Screen.print("leftOdometry %.2f  ", leftOdometry.position(rev));
     Brain.Screen.setCursor(3, 1);
-    Brain.Screen.print("distanceTraveledPctLeft = %.2f    ", distanceTraveledPctLeft);
-    Brain.Screen.setCursor(4, 1);
-    Brain.Screen.print("distributedSpeedLeft %.2f  ", distributedSpeedLeft);
-    Brain.Screen.setCursor(5, 1);
     Brain.Screen.print("ajustedSpeedLeft = %.2f    ", ajustedSpeedLeft);
-    Brain.Screen.setCursor(6, 1);
+    Brain.Screen.setCursor(4, 1);
     Brain.Screen.print("rightOdometry %.2f  ", rightOdometry.position(rev));
-    Brain.Screen.setCursor(7, 1);
-    Brain.Screen.print("distanceTraveledPctRight = %.2f    ", distanceTraveledPctRight);
-    Brain.Screen.setCursor(8, 1);
-    Brain.Screen.print("distributedSpeedRight %.2f  ", distributedSpeedRight);
-    Brain.Screen.setCursor(9, 1);
+    Brain.Screen.setCursor(5, 1);
     Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
+    Brain.Screen.setCursor(6, 1);
+    Brain.Screen.print("distanceTraveledPctAvg = %.2f    ", distanceTraveledPctAvg);
 
     LeftMotor1.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
     LeftMotor2.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
     LeftMotor3.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
-    RightMotor1.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
-    RightMotor2.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
-    RightMotor3.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
-    if (leftOdometry.position(rev) < -distanceRev) {
+    RightMotor1.spin(directionType::rev, ajustedSpeedRight, velocityUnits::pct);
+    RightMotor2.spin(directionType::rev, ajustedSpeedRight, velocityUnits::pct);
+    RightMotor3.spin(directionType::rev, ajustedSpeedRight, velocityUnits::pct);
+    if (leftOdometry.position(rev) < -distanceRev || rightOdometry.position(rev) < -distanceRev) {
       LeftMotor1.stop(); 
       LeftMotor2.stop(); 
       LeftMotor3.stop();
-    }
-    if (rightOdometry.position(rev) < -distanceRev) {
       RightMotor1.stop(); 
       RightMotor2.stop(); 
       RightMotor3.stop();
@@ -931,7 +935,8 @@ void autonomous(void) {
   }
   ////the all important
   //LeftAuto();
-  MoveStraight(72, 50, true);
+  MoveStraight(48, 50, true);
+  MoveStraight(48, 50, false);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -1285,10 +1290,10 @@ void usercontrolElliot(void) {
     };
     //top outtaking
     if (Controller1.ButtonL2.pressing() && !L2pressed) {
-      systemState = 4; timer1 = 1;
-      /*if (systemState == 2) {systemState=0;}
+      //systemState = 4; timer1 = 1;
+      if (systemState == 2) {systemState=0;}
       else {systemState = 2;}
-      */
+      
       L2pressed = true;
     }
     if (!Controller1.ButtonR2.pressing()) {
@@ -1319,8 +1324,8 @@ void usercontrolElliot(void) {
       case 1://intaking
       IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
       if (limitSwitch) {OuttakeMotor.spin(directionType::fwd, 10, velocityUnits::pct);}
-      else {}
-      ramp.set(false);
+      else {OuttakeMotor.stop();}
+      ramp.set(true);
       //OuttakeMotor.stop();
       break; 
       case 0:
@@ -1598,7 +1603,7 @@ void usercontrol(void) {
 int main() {
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
-  Competition.drivercontrol(usercontrolChris);//usercontrol
+  Competition.drivercontrol(usercontrolElliot);//usercontrol
 
   // Run the pre-autonomous function.
   pre_auton();
