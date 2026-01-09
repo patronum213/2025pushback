@@ -201,6 +201,116 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
     };
   }
 }
+//distance, maxSpeed, fowards
+void MoveStraightOld(float distance, int maxSpeed, bool fowards) {
+  resetMotorEncoders();
+  //wheels are 2 inches in diamametere, times pi means curcumernce is 7.853975 in
+  //divided by 360 to get the inces per degree (0.0349065556)
+  //times 1.1669779538 for the gearing
+  //gives us the final multiplier of 0.0139626222 
+  /*float distancedeg = (distance*0.0349065556)*1.1669779538;
+  Brain.Screen.setCursor(4, 1);
+  Brain.Screen.print("dist in deg = %.2f  ", (distance*0.0349065556)*1.1669779538);*/
+  //alright screw it it's revolution time
+  //distance (in inches) divided by wheel curcumfrence mutiplied by gear raito
+  //TODO: switch this to pid for greater accuracy.
+  float gearningConstant = 1.1669779538;
+  float distanceRev = (distance/7.853975)*gearningConstant;
+  if (fowards) {
+    while (LeftMotor2.position(rev) < distanceRev or RightMotor2.position(rev) < distanceRev) {
+    float distanceTraveledPctLeft = (LeftMotor2.position(rev)/distanceRev)*100.0;
+    float distributedSpeedLeft = distributeParabolically(distanceTraveledPctLeft/100.0)*100.0;
+    float ajustedSpeedLeft = std::max((distributedSpeedLeft * (maxSpeed/100.0)), 10.0);
+
+    float distanceTraveledPctRight = (RightMotor2.position(rev)/distanceRev)*100.0;
+    float distributedSpeedRight = distributeParabolically(distanceTraveledPctRight/100.0)*100.0;
+    float ajustedSpeedRight = std::max((distributedSpeedRight * (maxSpeed/100.0)), 10.0);
+    Brain.Screen.setCursor(1, 1);
+    Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
+    Brain.Screen.setCursor(2, 1);
+    Brain.Screen.print("leftmotor2 %.2f  ", LeftMotor2.position(rev));
+    Brain.Screen.setCursor(3, 1);
+    Brain.Screen.print("distanceTraveledPctLeft = %.2f    ", distanceTraveledPctLeft);
+    Brain.Screen.setCursor(4, 1);
+    Brain.Screen.print("distributedSpeedLeft %.2f  ", distributedSpeedLeft);
+    Brain.Screen.setCursor(5, 1);
+    Brain.Screen.print("ajustedSpeedLeft = %.2f    ", ajustedSpeedLeft);
+    Brain.Screen.setCursor(6, 1);
+    Brain.Screen.print("Rightmotor2 %.2f  ", RightMotor2.position(rev));
+    Brain.Screen.setCursor(7, 1);
+    Brain.Screen.print("distanceTraveledPctRight = %.2f    ", distanceTraveledPctRight);
+    Brain.Screen.setCursor(8, 1);
+    Brain.Screen.print("distributedSpeedRight %.2f  ", distributedSpeedRight);
+    Brain.Screen.setCursor(9, 1);
+    Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
+
+
+    LeftMotor1.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
+    LeftMotor2.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct); 
+    LeftMotor3.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
+    RightMotor1.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
+    RightMotor2.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
+    RightMotor3.spin(directionType::fwd, ajustedSpeedLeft, velocityUnits::pct);
+    if (LeftMotor2.position(rev) > distanceRev) {
+      LeftMotor1.stop(); 
+      LeftMotor2.stop(); 
+      LeftMotor3.stop();
+    }
+    if (RightMotor2.position(rev) > distanceRev) {
+      RightMotor1.stop(); 
+      RightMotor2.stop(); 
+      RightMotor3.stop();
+    }
+    };
+  }
+  else if (!fowards) {
+    while (LeftMotor2.position(rev) > -distanceRev or RightMotor2.position(rev) > -distanceRev ) {
+    float distanceTraveledPctLeft = (LeftMotor2.position(rev)/distanceRev)*100.0;
+    float distributedSpeedLeft = distributeParabolically(-distanceTraveledPctLeft/100.0)*100.0;
+    float ajustedSpeedLeft = std::max((distributedSpeedLeft * (maxSpeed/100.0)), 10.0);
+
+    float distanceTraveledPctRight = (RightMotor2.position(rev)/distanceRev)*100.0;
+    float distributedSpeedRight = distributeParabolically(-distanceTraveledPctRight/100.0)*100.0;
+    float ajustedSpeedRight = std::max((distributedSpeedRight * (maxSpeed/100.0)), 10.0);
+    
+    Brain.Screen.setCursor(1, 1);
+    Brain.Screen.print("distanceRev = %.2f    ", distanceRev);
+    Brain.Screen.setCursor(2, 1);
+    Brain.Screen.print("leftmotor2 %.2f  ", LeftMotor2.position(rev));
+    Brain.Screen.setCursor(3, 1);
+    Brain.Screen.print("distanceTraveledPctLeft = %.2f    ", distanceTraveledPctLeft);
+    Brain.Screen.setCursor(4, 1);
+    Brain.Screen.print("distributedSpeedLeft %.2f  ", distributedSpeedLeft);
+    Brain.Screen.setCursor(5, 1);
+    Brain.Screen.print("ajustedSpeedLeft = %.2f    ", ajustedSpeedLeft);
+    Brain.Screen.setCursor(6, 1);
+    Brain.Screen.print("Rightmotor2 %.2f  ", RightMotor2.position(rev));
+    Brain.Screen.setCursor(7, 1);
+    Brain.Screen.print("distanceTraveledPctRight = %.2f    ", distanceTraveledPctRight);
+    Brain.Screen.setCursor(8, 1);
+    Brain.Screen.print("distributedSpeedRight %.2f  ", distributedSpeedRight);
+    Brain.Screen.setCursor(9, 1);
+    Brain.Screen.print("ajustedSpeedRight = %.2f    ", ajustedSpeedRight);
+
+    LeftMotor1.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
+    LeftMotor2.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct); 
+    LeftMotor3.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
+    RightMotor1.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
+    RightMotor2.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
+    RightMotor3.spin(directionType::rev, ajustedSpeedLeft, velocityUnits::pct);
+    if (LeftMotor2.position(rev) < -distanceRev) {
+      LeftMotor1.stop(); 
+      LeftMotor2.stop(); 
+      LeftMotor3.stop();
+    }
+    if (RightMotor2.position(rev) < -distanceRev) {
+      RightMotor1.stop(); 
+      RightMotor2.stop(); 
+      RightMotor3.stop();
+    }
+    };
+  }
+}
 //degrees, maxSpeed; positive is right negative is left
 void MoveTurning(float degrees, int maxSpeed) {
   float tolernceConstant = 0.3;
@@ -785,8 +895,69 @@ void RightAuto(void) {
   //*/
 };
 //////////////////////////////////////////////////////skills auto, 
+void SkillsAutoSafe(void) {
+  MoveStraight(32, 40, true);//move to the intake
+  toungue.set(true);
+  ramp.set(true);
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  MoveTurning(90, 30);//turn towards it
+  wait(100, msec);
+  for (int i = 0; i < 2; i++) {
+  MoveFree(1000, true, 45);//move in to it
+  OuttakeMotor.spin(directionType::fwd, 30, velocityUnits::pct);
+  MoveFree(250, true, 60);//move in to it
+  wait(500, msec);
+  MoveFree(250, true, 60);//move in to it
+  wait(500, msec);
+  MoveFree(250, true, 60);//move in to it
+  OuttakeMotor.stop();
+  wait(1000, msec);
+  ramp.set(true);
+  MoveStraight(25, 40, false);
+  MoveFree(300, false, 30);//move directly backwards in to the goal
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
+  wait(800, msec);
+  OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
+  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+  wait(300, msec);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  wait(1000, msec);
+  OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
+  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+  wait(300, msec);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  wait(2000, msec);//wait till all the balls are scored
+  ramp.set(false);
+  wait(500, msec);
+  }
+  MoveStraight(13, 40, true);
+  OuttakeMotor.stop();
+  MoveTurning(90, 30);
+  MoveFree(2000, false, 30);
+  MoveStraight(15, 30, true);
+  toungue.set(false);
+  MoveTurning(-30, 30);
+  MoveStraight(10, 30, true);
+  odometryWheels.set(false);//leap of faith
+  MoveFree(2000, true, 30);
+  //MoveStraightOld(10, 30, true);
+  
+  //expirimental auto
+  /*MoveStraight(21, 55, true);//back out
+  OuttakeMotor.stop();
+  toungue.set(false);
+  MoveTurning(-135, 40);//turn towards the group of 3
+  MoveStraight(34, 40, true);//run in to and intake them
+  MoveTurning(-180, 50);//turn around
+  toungue.set(true);//put the tounge down to make sure they don't get away
+  ramp.set(false);//switch to middle level scoring
+  MoveStraight(14, 40, false);//move in to the goal
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);*/
+};
 void SkillsAuto(void) {
-  MoveStraight(31.3, 65, true);//move to the intake
+  MoveStraight(32, 40, true);//move to the intake
   toungue.set(true);
   ramp.set(true);
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
@@ -794,7 +965,11 @@ void SkillsAuto(void) {
   wait(100, msec);
   MoveFree(1000, true, 45);//move in to it
   OuttakeMotor.spin(directionType::fwd, 30, velocityUnits::pct);
-  MoveFree(500, true, 45);//move in to it
+  MoveFree(250, true, 60);//move in to it
+  wait(200, msec);
+  MoveFree(250, true, 60);//move in to it
+  wait(200, msec);
+  MoveFree(250, true, 60);//move in to it
   OuttakeMotor.stop();
   wait(700, msec);
   MoveFree(1800, false, 50);//move directly backwards in to the goal
@@ -802,20 +977,26 @@ void SkillsAuto(void) {
   wait(800, msec);
   OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
   IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
-  wait(200, msec);
+  wait(300, msec);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  wait(1000, msec);
+  OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
+  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+  wait(300, msec);
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
   wait (2000, msec);//wait till all the balls are scored
   toungue.set(false);
   //move to the other side and align
-  MoveStraight(16, 40, true);
+  MoveStraight(13, 40, true);
   OuttakeMotor.stop();
-  MoveTurning(-90, 30);
-  MoveFree(2000, true, 30);
-  MoveStraight(110, 100, false);//move to the other side
-  MoveTurning(180, 30);
-  MoveFree(1000, true, 30);
-  MoveStraight(12.6, 30, false);
+  MoveTurning(90, 30);
+  MoveFree(2000, false, 30);
+  MoveStraight(110, 100, true);//move to the other side
+  //MoveTurning(180, 30);
+  MoveFree(1300, true, 40);//touch the wall
+  MoveStraight(14.5, 30, false);//back out inline with the goal and chute
   MoveTurning(-90, 30);
   toungue.set(true);
   //otherside code
@@ -827,15 +1008,21 @@ void SkillsAuto(void) {
   wait(800, msec);
   OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
   IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
-  wait(200, msec);
+  wait(300, msec);
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  wait(2000, msec);//wait till all the balls are scored
+  wait(1000, msec);
+  OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
+  IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+  wait(300, msec);
+  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
+  IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+  wait (2000, msec);//wait till all the balls are scored
   MoveStraight(10, 30, true);
-  MoveTurning(135, 30);
+  toungue.set(false);
+  MoveTurning(-45, 30);
+  odometryWheels.set(false);//leap of faith
   MoveFree(4000, true, 30);
-  toungue.set(true);
-  MoveFree(3000, true, 100);
   //expirimental auto
   /*MoveStraight(21, 55, true);//back out
   OuttakeMotor.stop();
@@ -934,9 +1121,8 @@ void autonomous(void) {
     wait(20, msec);
   }
   ////the all important
-  //LeftAuto();
-  MoveStraight(48, 50, true);
-  MoveStraight(48, 50, false);
+  SkillsAutoSafe();
+  
 }
 
 /*---------------------------------------------------------------------------*/
