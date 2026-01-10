@@ -31,7 +31,7 @@ digital_in limitSwitch = vex::digital_in(ThreeWirePort.E);
 
 rotation leftOdometry = rotation(PORT5, true);
 rotation rightOdometry = rotation(PORT4, false);
-inertial Inertial = inertial(PORT11);
+inertial Inertial = inertial(PORT17);
 
 void resetMotorEncoders(void) {
   LeftMotor1.resetPosition(); 
@@ -92,7 +92,7 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
     float distanceTraveledPctRight = (rightOdometry.position(rev)/distanceRev)*100.0;
     float distanceTraveledPctAvg = (distanceTraveledPctLeft+distanceTraveledPctRight)/2;
     float distributedSpeed = distributeParabolically(distanceTraveledPctAvg/100.0)*100.0;
-    float cappedSpeed = std::max((distributedSpeed * (maxSpeed/100.0)), 10.0);
+    float cappedSpeed = std::max((distributedSpeed * (maxSpeed/100.0)), 15.0);
     float ajustedSpeedLeft = cappedSpeed;
     float ajustedSpeedRight = cappedSpeed;
     
@@ -167,7 +167,7 @@ void MoveStraight(float distance, int maxSpeed, bool fowards) {
     float distanceTraveledPctRight = (rightOdometry.position(rev)/distanceRev)*100.0;
     float distanceTraveledPctAvg = (distanceTraveledPctLeft+distanceTraveledPctRight)/2;
     float distributedSpeed = distributeParabolically(-distanceTraveledPctAvg/100.0)*100.0;
-    float cappedSpeed = std::max((distributedSpeed * (maxSpeed/100.0)), 10.0);
+    float cappedSpeed = std::max((distributedSpeed * (maxSpeed/100.0)), 15.0);
     float ajustedSpeedLeft = cappedSpeed;
     float ajustedSpeedRight = cappedSpeed;
     
@@ -902,9 +902,9 @@ void SkillsAutoSafe(void) {
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
   MoveTurning(90, 30);//turn towards it
   wait(100, msec);
-  for (int i = 0; i < 2; i++) {
+  //for (int i = 0; i < 1; i++) {
   MoveFree(1000, true, 45);//move in to it
-  OuttakeMotor.spin(directionType::fwd, 30, velocityUnits::pct);
+  OuttakeMotor.spin(directionType::fwd, 20, velocityUnits::pct);
   MoveFree(250, true, 60);//move in to it
   wait(500, msec);
   MoveFree(250, true, 60);//move in to it
@@ -914,47 +914,44 @@ void SkillsAutoSafe(void) {
   wait(1000, msec);
   ramp.set(true);
   MoveStraight(25, 40, false);
-  MoveFree(300, false, 30);//move directly backwards in to the goal
+  MoveFree(500, false, 30);//move directly backwards in to the goal
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//outtake
   wait(800, msec);
   OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
   IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
-  wait(300, msec);
+  wait(200, msec);
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
   wait(1000, msec);
   OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);//brienfly reverse to unstick stuck balls
   IntakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
-  wait(300, msec);
+  wait(200, msec);
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  wait(2000, msec);//wait till all the balls are scored
+  wait(2500, msec);//wait till all the balls are scored
   ramp.set(false);
   wait(500, msec);
-  }
-  MoveStraight(13, 40, true);
+  //}
+  MoveStraight(20, 40, true);
   OuttakeMotor.stop();
   MoveTurning(90, 30);
   MoveFree(2000, false, 30);
-  MoveStraight(15, 30, true);
+  MoveStraight(13, 30, true);
   toungue.set(false);
-  MoveTurning(-30, 30);
+  MoveTurning(-25, 20);
   MoveStraight(10, 30, true);
   odometryWheels.set(false);//leap of faith
-  MoveFree(2000, true, 30);
-  //MoveStraightOld(10, 30, true);
-  
-  //expirimental auto
-  /*MoveStraight(21, 55, true);//back out
-  OuttakeMotor.stop();
+  MoveFree(800, true, 45);
+  toungue.set(true);
+  MoveFree(1100, true, 30);
   toungue.set(false);
-  MoveTurning(-135, 40);//turn towards the group of 3
-  MoveStraight(34, 40, true);//run in to and intake them
-  MoveTurning(-180, 50);//turn around
-  toungue.set(true);//put the tounge down to make sure they don't get away
-  ramp.set(false);//switch to middle level scoring
-  MoveStraight(14, 40, false);//move in to the goal
-  OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);*/
+  MoveFree(675, true, 30);
+  LeftMotor1.setStopping(coast); 
+  LeftMotor2.setStopping(coast); 
+  LeftMotor3.setStopping(coast);
+  RightMotor1.setStopping(coast);
+  RightMotor2.setStopping(coast);
+  RightMotor3.setStopping(coast);
 };
 void SkillsAuto(void) {
   MoveStraight(32, 40, true);//move to the intake
