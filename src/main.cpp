@@ -25,6 +25,7 @@ competition Competition;
 triport ThreeWirePort = vex::triport( vex::PORT22 );
 digital_out toungue = vex::digital_out(ThreeWirePort.A);
 digital_out ramp = vex::digital_out(ThreeWirePort.B);
+digital_out gate = vex::digital_out(ThreeWirePort.F);
 digital_out wing = vex::digital_out(ThreeWirePort.C);
 digital_out odometryWheels = vex::digital_out(ThreeWirePort.D);
 digital_in limitSwitch = vex::digital_in(ThreeWirePort.E);
@@ -1103,7 +1104,7 @@ void SkillsAuto2(void) {
   wait(200, msec);
   OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);//go back to outtaking
   IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-  wait (2000, msec);//wait till all the balls are scored
+  wait(2000, msec);//wait till all the balls are scored
   toungue.set(false);
 
 
@@ -1361,10 +1362,10 @@ void usercontrolElliot(void) {
   RightMotor3.setStopping(coast);
   OuttakeMotor.setStopping(coast);
   odometryWheels.set(false);//retract odometry wheels
-  toungue.set(true);
+  toungue.set(false);
   ramp.set(true);
   float FBsensitivity = 1.0;
-  float LRsensitivity = 0.6;
+  float LRsensitivity = 0.4;
   float PIDIncrement = 0.25;
   float PIDTolerancePct = 5;
 
@@ -1379,12 +1380,11 @@ void usercontrolElliot(void) {
 
   int systemState = 1;//0 is at rest, 1 is intaking, 2 is top outtaking, 3 is bottom outtaking
   int timer1 = 0;
-  toungue.set(true);
   // User control code here, inside the loop
   while (1) {
     //Driving Control
     //controller dead zone
-    int deadzonepct  = 10;
+    int deadzonepct  = 15;
     float Axis3 = Controller1.Axis3.position(percent);
     float Axis1 = Controller1.Axis1.position(percent);
     float Axis3Dead = Axis3 > deadzonepct ? ((Axis3 - deadzonepct)*1.00/(100-deadzonepct))*100 : 
@@ -1422,13 +1422,15 @@ void usercontrolElliot(void) {
         }
       }
     }
-
-    LeftMotor1.spin(directionType::fwd, LeftSidePower, velocityUnits::pct); 
-    LeftMotor2.spin(directionType::fwd, LeftSidePower, velocityUnits::pct); 
-    LeftMotor3.spin(directionType::fwd, LeftSidePower, velocityUnits::pct);
-    RightMotor1.spin(directionType::fwd, RightSidePower, velocityUnits::pct);
-    RightMotor2.spin(directionType::fwd, RightSidePower, velocityUnits::pct);
-    RightMotor3.spin(directionType::fwd, RightSidePower, velocityUnits::pct);
+    LeftSidePower = (LeftSidePower/100.0)*127.0;
+    RightSidePower = (RightSidePower/100.0)*127.0;
+    
+    LeftMotor1.spin(directionType::fwd, LeftSidePower, voltageUnits::volt); 
+    LeftMotor2.spin(directionType::fwd, LeftSidePower, voltageUnits::volt); 
+    LeftMotor3.spin(directionType::fwd, LeftSidePower, voltageUnits::volt);
+    RightMotor1.spin(directionType::fwd, RightSidePower, voltageUnits::volt);
+    RightMotor2.spin(directionType::fwd, RightSidePower, voltageUnits::volt);
+    RightMotor3.spin(directionType::fwd, RightSidePower, voltageUnits::volt);
     
 
     if (timer1 >= 0) {timer1 -= 1;};
@@ -1500,22 +1502,27 @@ void usercontrolElliot(void) {
       case 4://down outtaking
       IntakeMotor.spin(directionType::rev, 60, velocityUnits::pct);
       OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+      gate.set(true);
       break; 
       case 3://middle outtaking
       IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
       OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
       ramp.set(false);
+      gate.set(false);
       break; 
       case 2://top outtaking
       IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
       OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
       ramp.set(true);
+      gate.set(false);
       break; 
       case 1://intaking
       IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-      if (limitSwitch) {OuttakeMotor.spin(directionType::fwd, 10, velocityUnits::pct);}
-      else {OuttakeMotor.stop();}
+      //if (limitSwitch) {OuttakeMotor.spin(directionType::fwd, 10, velocityUnits::pct);}
+      //else {OuttakeMotor.stop();}
+      OuttakeMotor.stop(coast);
       ramp.set(true);
+      gate.set(true);
       //OuttakeMotor.stop();
       break; 
       case 0:
@@ -1539,7 +1546,7 @@ void usercontrolElliot(void) {
     Controller1.Screen.print(avgDriveHeat);
     Controller1.Screen.setCursor(1, 17);
     Controller1.Screen.print(OuttakeMotor.temperature(pct));
-
+    
     Brain.Screen.setCursor(1, 1);
     Brain.Screen.print("left1 = %.2f    ", LeftMotor1.torque(Nm));
     Brain.Screen.setCursor(2, 1);
