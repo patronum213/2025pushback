@@ -1,19 +1,18 @@
 {
-	"extension": {
-		"version": "0.7.2025041600",
-		"json": 2
-	},
 	"project": {
-		"name": "2025pushback",
-		"description": "",
-		"creationDate": "7/2/2025, 5:33:47 PM",
-		"platform": "V5",
-		"language": "cpp",
+		"name": "mikLib",
 		"slot": 1,
+		"description": "mikLib-v1.2.3",
+		"platform": "V5",
+		"creationDate": "Thu, 29 Jan 2026 04:03:17 GMT",
+		"language": "cpp",
 		"sdkVersion": "V5_20240802_15_00_00",
 		"cpp": {
-			"includePath": [],
-			"printf_float": true
+			"includePath": []
 		}
+	},
+	"extension": {
+		"version": "0.8.2026011200",
+		"json": 1
 	}
 }
