@@ -1362,7 +1362,7 @@ void usercontrolElliot(void) {
   RightMotor3.setStopping(coast);
   OuttakeMotor.setStopping(coast);
   odometryWheels.set(false);//retract odometry wheels
-  toungue.set(false);
+  toungue.set(true);
   ramp.set(true);
   float FBsensitivity = 1.0;
   float LRsensitivity = 0.4;
@@ -1482,9 +1482,9 @@ void usercontrolElliot(void) {
     };
     //top outtaking
     if (Controller1.ButtonL2.pressing() && !L2pressed) {
-      //systemState = 4; timer1 = 1;
-      if (systemState == 2) {systemState=0;}
-      else {systemState = 2;}
+      systemState = 4; timer1 = 1;
+      /*if (systemState == 2) {systemState=0;}
+      else {systemState = 2;}*/
       
       L2pressed = true;
     }
@@ -1506,7 +1506,7 @@ void usercontrolElliot(void) {
       break; 
       case 3://middle outtaking
       IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-      OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+      OuttakeMotor.spin(directionType::fwd, 60, velocityUnits::pct);
       ramp.set(false);
       gate.set(false);
       break; 
@@ -1518,9 +1518,10 @@ void usercontrolElliot(void) {
       break; 
       case 1://intaking
       IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+      OuttakeMotor.spin(directionType::fwd, 15, velocityUnits::pct);
       //if (limitSwitch) {OuttakeMotor.spin(directionType::fwd, 10, velocityUnits::pct);}
       //else {OuttakeMotor.stop();}
-      OuttakeMotor.stop(coast);
+      //OuttakeMotor.stop(coast);
       ramp.set(true);
       gate.set(true);
       //OuttakeMotor.stop();
