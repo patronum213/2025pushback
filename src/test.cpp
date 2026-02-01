@@ -15,6 +15,9 @@ void test_drive() {
 	chassis.drive_distance(6);
 	chassis.drive_distance(12);
 	chassis.drive_distance(18);
+	wait(2, sec);
+	chassis.drive_distance(-36);
+	chassis.drive_distance(36);
 	chassis.drive_distance(-36);
 }
 
