@@ -1436,18 +1436,24 @@ void usercontrolElliot(void) {
     if (timer1 >= 0) {timer1 -= 1;};
     
     //descoring wing
-    if (Controller1.ButtonDown.pressing() && !Downpressed) {
+    /*if (Controller1.ButtonDown.pressing() && !Downpressed) {
       if (wing.value()) {wing.set(false);}
       else {wing.set(true);}
       Downpressed = true;
     }
     if (!Controller1.ButtonDown.pressing()) {
       Downpressed = false;
-    };
+    };*/
+    if (Controller1.ButtonDown.pressing()) {
+        wing.set(false);
+    }
+    else {wing.set(true);}
     //toungue
     if (Controller1.ButtonB.pressing() && !Bpressed) {
       if (toungue.value()) {toungue.set(false);}
-      else {toungue.set(true);}
+      else {toungue.set(true);
+      systemState = 1;  
+      }
       Bpressed = true;
     }
     if (!Controller1.ButtonB.pressing()) {
