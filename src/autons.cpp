@@ -7,7 +7,7 @@ void default_constants(void) {
     chassis.set_control_constants(5, 10, 1.019, 5, 10, 1.019);
 
     // Each constant set is in the form of (maxVoltage, kP, kI, kD, startI).
-    chassis.set_turn_constants(12, .437, .0215, 3.686, 15);
+    chassis.set_turn_constants(10, 0.4, 0.020, 4, 15);
     chassis.set_drive_constants(10, 1.5, 1, 9, 0.5);
     chassis.set_heading_constants(6, .4, 0, 1, 0);
     chassis.set_swing_constants(12, .437, .0295, 3.486, 15);

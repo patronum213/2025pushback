@@ -28,12 +28,20 @@ void test_heading() {
 }
 
 void test_turn() {
-	chassis.turn_to_angle(5);
+	/*chassis.turn_to_angle(5);
+	wait(1, sec);
 	chassis.turn_to_angle(30);
+	wait(1, sec);
 	chassis.turn_to_angle(90);
+	wait(1, sec);
 	chassis.turn_to_angle(225);
+	wait(1, sec);
 	chassis.turn_to_angle(180, { .turn_direction = ccw });
-	chassis.turn_to_angle(0, { .turn_direction = cw });
+	wait(1, sec);
+	chassis.turn_to_angle(0, { .turn_direction = cw });*/
+	chassis.turn_to_angle(180, {.turn_direction = ccw });
+	chassis.turn_to_angle(0, {.turn_direction = ccw });
+
 }
 
 void test_swing() {

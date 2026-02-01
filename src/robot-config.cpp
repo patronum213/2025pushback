@@ -10,13 +10,13 @@ vex::competition Competition;
 bool calibrating = false;
 
 // Allows recalibration of the inertial using MINIMUN_INERTIAL_CALIBRATION_ERROR
-bool force_calibrate_inertial = false;
+bool force_calibrate_inertial = true;
 
 // After inertial sensor calibration the program waits 1 second and checks 
 // to see if the angle has changed more than this value. If so, it will recalibrate 
 // the inertial sensor and vibrate the controller. The lower the value the less likelihood
 // of a failed calibration.
-static const float MINIMUN_INERTIAL_CALIBRATION_ERROR = .05;
+static const float MINIMUN_INERTIAL_CALIBRATION_ERROR = .5;
 
 Chassis chassis(
     // Drivetrain motors
@@ -32,7 +32,7 @@ Chassis chassis(
     }),
 
     PORT17, // Inertia sensor port
-    360,    // Inertial scale, value that reads after turning robot a full 360
+    362.3,    // Inertial scale, value that reads after turning robot a full 360
 
     PORT7, // Forward Tracker Port
     -2.75,     // Forward Tracker wheel diameter in inches (negative flips direction)
