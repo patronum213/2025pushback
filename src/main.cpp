@@ -1368,6 +1368,7 @@ void usercontrolElliot(void) {
   float LRsensitivity = 0.25;
   float PIDIncrement = 0.25;
   float PIDTolerancePct = 5;
+  float rampRate = 500;//time to reach full power in ms
 
   float LeftSidePower = 0.0;
   float RightSidePower = 0.0;
@@ -1380,8 +1381,8 @@ void usercontrolElliot(void) {
   bool Bpressed = false;
   bool Downpressed = false;
   bool Uppressed = false;
-
-
+  float LeftRampProgress = 1;
+  float RightRampProgress = 1;
   int systemState = 1;//0 is at rest, 1 is intaking, 2 is top outtaking, 3 is bottom outtaking
   int timer1 = 0;
   bool turbo = false;
@@ -1405,6 +1406,17 @@ void usercontrolElliot(void) {
     //set motor powers
     LeftSidePower = (Axis3Curved + Axis1Curved)/2;
     RightSidePower = (Axis3Curved - Axis1Curved)/2;
+
+    //ramping
+    if (abs(LeftSidePower) > 0) {LeftRampProgress += 1; LeftRampProgress = std::min(LeftRampProgress, rampRate/25);}
+    else {LeftRampProgress = 0;}
+    if (abs(RightSidePower) > 0) {RightRampProgress += 1; RightRampProgress = std::min(RightRampProgress, rampRate/25);}
+    else {RightRampProgress = 0;}
+    LeftSidePower *= LeftRampProgress/(rampRate/25);
+    RightSidePower *= RightRampProgress/(rampRate/25);
+
+    
+
     if (abs(Axis3Dead) > 0 && abs(Axis1Dead) > 0) {//if we're not turning, use PID to make sure the robot driving straight
       float basePower = Axis3Curved;
       float RightSidePower = Axis3Curved;
@@ -1427,6 +1439,8 @@ void usercontrolElliot(void) {
         }
       }
     }
+
+
     LeftSidePower = (LeftSidePower/100.0)*127.0;
     RightSidePower = (RightSidePower/100.0)*127.0;
     
