@@ -1364,22 +1364,27 @@ void usercontrolElliot(void) {
   odometryWheels.set(false);//retract odometry wheels
   toungue.set(true);
   ramp.set(true);
-  float FBsensitivity = 1.0;
-  float LRsensitivity = 0.4;
+  float FBsensitivity = 0.8;
+  float LRsensitivity = 0.25;
   float PIDIncrement = 0.25;
   float PIDTolerancePct = 5;
 
   float LeftSidePower = 0.0;
   float RightSidePower = 0.0;
+  float FBmult = FBsensitivity;
+  float LRmult = LRsensitivity;
   bool L1pressed = false;
   bool L2pressed = false;
   bool R1pressed = false;
   bool R2pressed = false;
   bool Bpressed = false;
   bool Downpressed = false;
+  bool Uppressed = false;
+
 
   int systemState = 1;//0 is at rest, 1 is intaking, 2 is top outtaking, 3 is bottom outtaking
   int timer1 = 0;
+  bool turbo = false;
   // User control code here, inside the loop
   while (1) {
     //Driving Control
@@ -1395,11 +1400,11 @@ void usercontrolElliot(void) {
     float Axis1Curved = distributeExponentially(Axis1Dead/100.0, 1.025)*100.0;
     float Axis3Curved = distributeExponentially(Axis3Dead/100.0, 1.025)*100.0;
     //sensitivity
-    Axis1Curved *= LRsensitivity;
-    Axis3Curved *= FBsensitivity;
+    Axis1Curved *= LRmult;
+    Axis3Curved *= FBmult;
     //set motor powers
-    LeftSidePower = (Axis3Curved + Axis1Curved);
-    RightSidePower = (Axis3Curved - Axis1Curved);
+    LeftSidePower = (Axis3Curved + Axis1Curved)/2;
+    RightSidePower = (Axis3Curved - Axis1Curved)/2;
     if (abs(Axis3Dead) > 0 && abs(Axis1Dead) > 0) {//if we're not turning, use PID to make sure the robot driving straight
       float basePower = Axis3Curved;
       float RightSidePower = Axis3Curved;
@@ -1435,6 +1440,14 @@ void usercontrolElliot(void) {
 
     if (timer1 >= 0) {timer1 -= 1;};
     
+    if (Controller1.ButtonUp.pressing() && !Uppressed) {
+      if (turbo) {turbo = false; FBmult = FBsensitivity; LRmult = LRsensitivity; }
+      else {turbo = true; FBmult = 1; LRmult = 1;}
+      Uppressed = true;
+    }
+    if (!Controller1.ButtonUp.pressing()) {
+      Uppressed = false;
+    };
     //descoring wing
     /*if (Controller1.ButtonDown.pressing() && !Downpressed) {
       if (wing.value()) {wing.set(false);}
@@ -1550,7 +1563,7 @@ void usercontrolElliot(void) {
     Controller1.Screen.setCursor(1, 1);
     Controller1.Screen.print(IntakeMotor.temperature(pct));
     Controller1.Screen.setCursor(1, 9);
-    Controller1.Screen.print(avgDriveHeat);
+    Controller1.Screen.print(LRmult);
     Controller1.Screen.setCursor(1, 17);
     Controller1.Screen.print(OuttakeMotor.temperature(pct));
     
