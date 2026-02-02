@@ -22,13 +22,13 @@ void test_drive() {
 }
 
 void test_heading() {
-	chassis.drive_distance(10, { .heading = 15 });
-	chassis.drive_distance(20, { .heading = 45 });
-	chassis.drive_distance(-30, { .heading = 0 });
+	chassis.drive_distance(20, { .heading = -15 });
+	chassis.drive_distance(40, { .heading = -45 });
+	chassis.drive_distance(-60, { .heading = 0 });
 }
 
 void test_turn() {
-	/*chassis.turn_to_angle(5);
+	chassis.turn_to_angle(5);
 	wait(1, sec);
 	chassis.turn_to_angle(30);
 	wait(1, sec);
@@ -38,9 +38,9 @@ void test_turn() {
 	wait(1, sec);
 	chassis.turn_to_angle(180, { .turn_direction = ccw });
 	wait(1, sec);
-	chassis.turn_to_angle(0, { .turn_direction = cw });*/
+	chassis.turn_to_angle(0, { .turn_direction = cw });/*
 	chassis.turn_to_angle(180, {.turn_direction = ccw });
-	chassis.turn_to_angle(0, {.turn_direction = ccw });
+	chassis.turn_to_angle(0, {.turn_direction = ccw });*/
 
 }
 
@@ -105,10 +105,13 @@ void test_boomerang() {
 	odom_constants();
 	chassis.set_coordinates(0, 0, 0);
 
-	chassis.drive_to_pose(24, 24, 90, {.lead = .4});
-	chassis.drive_to_pose(24, 0, 0, {.lead = .2});
-	chassis.drive_to_pose(0, 24, 315);
-	chassis.drive_to_pose(0, 0, 0);
+	chassis.drive_to_pose(24, 24, 90, {.lead = .7});
+	wait(2, sec);
+	/*chassis.drive_to_pose(24, 0, 0, {.lead = .2});
+	wait(2, sec);
+	chassis.drive_to_pose(0, 24, 180);
+	wait(2, sec);
+	chassis.drive_to_pose(0, 0, 180);*/
 	}
 
 std::vector<point> path = {
@@ -141,7 +144,7 @@ void test_pursuit() {
 	odom_constants();
 	chassis.set_coordinates(0, 0, 0);
 
-	chassis.follow_path(path, {.lookahead_distance = 3, .settle_error = 1});
+	chassis.follow_path(path, {.lookahead_distance = 1, .settle_error = 1});
 	// Reversing path
 	std::vector<point> reversed_path(path.rbegin(), path.rend());
 	chassis.follow_path(reversed_path, {.lookahead_distance = 4, .settle_error = 3});
