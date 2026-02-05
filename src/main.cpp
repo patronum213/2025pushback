@@ -1368,7 +1368,8 @@ void usercontrolElliot(void) {
   float LRsensitivity = 0.25;
   float PIDIncrement = 0.25;
   float PIDTolerancePct = 5;
-  float rampRate = 500;//time to reach full power in ms
+  float rampRate = 250;//time to reach full power in ms
+  float rampFloor = 4;//cycles of ramp that it resets too
 
   float LeftSidePower = 0.0;
   float RightSidePower = 0.0;
@@ -1381,8 +1382,8 @@ void usercontrolElliot(void) {
   bool Bpressed = false;
   bool Downpressed = false;
   bool Uppressed = false;
-  float LeftRampProgress = 1;
-  float RightRampProgress = 1;
+  float LeftRampProgress = rampFloor;
+  float RightRampProgress = rampFloor;
   int systemState = 1;//0 is at rest, 1 is intaking, 2 is top outtaking, 3 is bottom outtaking
   int timer1 = 0;
   bool turbo = false;
@@ -1409,9 +1410,9 @@ void usercontrolElliot(void) {
 
     //ramping
     if (abs(LeftSidePower) > 0) {LeftRampProgress += 1; LeftRampProgress = std::min(LeftRampProgress, rampRate/25);}
-    else {LeftRampProgress = 0;}
+    else {LeftRampProgress = rampFloor;}
     if (abs(RightSidePower) > 0) {RightRampProgress += 1; RightRampProgress = std::min(RightRampProgress, rampRate/25);}
-    else {RightRampProgress = 0;}
+    else {RightRampProgress = rampFloor;}
     LeftSidePower *= LeftRampProgress/(rampRate/25);
     RightSidePower *= RightRampProgress/(rampRate/25);
 
@@ -1463,18 +1464,18 @@ void usercontrolElliot(void) {
       Uppressed = false;
     };
     //descoring wing
-    /*if (Controller1.ButtonDown.pressing() && !Downpressed) {
+    if (Controller1.ButtonDown.pressing() && !Downpressed) {
       if (wing.value()) {wing.set(false);}
       else {wing.set(true);}
       Downpressed = true;
     }
     if (!Controller1.ButtonDown.pressing()) {
       Downpressed = false;
-    };*/
-    if (Controller1.ButtonDown.pressing()) {
+    };
+    /*if (Controller1.ButtonDown.pressing()) {
         wing.set(false);
     }
-    else {wing.set(true);}
+    else {wing.set(true);}*/
     //toungue
     if (Controller1.ButtonB.pressing() && !Bpressed) {
       if (toungue.value()) {toungue.set(false);}
@@ -1551,7 +1552,7 @@ void usercontrolElliot(void) {
       break; 
       case 1://intaking
       IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-      OuttakeMotor.spin(directionType::fwd, 15, velocityUnits::pct);
+      OuttakeMotor.spin(directionType::fwd, 50, velocityUnits::pct);
       //if (limitSwitch) {OuttakeMotor.spin(directionType::fwd, 10, velocityUnits::pct);}
       //else {OuttakeMotor.stop();}
       //OuttakeMotor.stop(coast);
