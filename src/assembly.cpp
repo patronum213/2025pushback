@@ -4,16 +4,20 @@ using namespace vex;
 
 // Pass in the devices we want to use
 Assembly::Assembly(
-    mik::motor_group lift_arm_motors,
     mik::motor intake_motor, 
-    vex::rotation lift_arm_encoder,
-    mik::piston long_piston
+    mik::motor outtake_motor, 
+    mik::piston tougue,
+    mik::piston ramp,
+    mik::piston gate,
+    mik::piston wing
 ) :
     // Assign the ports to the devices
-    lift_arm_motors(lift_arm_motors),
     intake_motor(intake_motor),
-    lift_arm_encoder(lift_arm_encoder),
-    long_piston(long_piston) // Make sure when using a 3 wire device that isnt mik::piston you convert the port. `to_triport(PORT_A)`.
+    outtake_motor(outtake_motor),
+    tougue(tougue), // Make sure when using a 3 wire device that isnt mik::piston you convert the port. `to_triport(PORT_A)`.
+    ramp(ramp),
+    gate(gate),
+    wing(wing)
 {};
 
 // You want to call this function once in the user control function in main.
@@ -33,7 +37,7 @@ void Assembly::control() {
     long_piston_control();
 }
 
-void Assembly::move_lift_arm() {
+/*void Assembly::move_lift_arm() {
     // Create a proportional controller. Increase the P just enough so there isn't much oscillation.
     PID lift_PID(.1, 0, 0);
     while (true) {
@@ -82,4 +86,4 @@ void Assembly::long_piston_control() {
     if (btnA_new_press(Controller.ButtonA.pressing())) {
         long_piston.toggle();
     }
-}
+}*/
