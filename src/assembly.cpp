@@ -9,7 +9,8 @@ Assembly::Assembly(
     mik::piston tougue,
     mik::piston ramp,
     mik::piston gate,
-    mik::piston wing
+    mik::piston wing,
+    mik::piston odom_piston
 ) :
     // Assign the ports to the devices
     intake_motor(intake_motor),
@@ -17,14 +18,15 @@ Assembly::Assembly(
     tougue(tougue), // Make sure when using a 3 wire device that isnt mik::piston you convert the port. `to_triport(PORT_A)`.
     ramp(ramp),
     gate(gate),
-    wing(wing)
+    wing(wing),
+    odom_piston(odom_piston)
 {};
 
 // You want to call this function once in the user control function in main.
 void Assembly::init() {
     // Create the task to move the lift arm. We only want one task to be created
     lift_task = vex::task([](){
-        assembly.move_lift_arm();
+        //assembly.move_lift_arm();
         return 0;
     });
     // To stop the task do `assembly.lift_task.stop();`
@@ -32,9 +34,10 @@ void Assembly::init() {
 
 // You want to put this function inside the user control loop in main.
 void Assembly::control() {
-    lift_arm_control();
-    intake_motors_control();
-    long_piston_control();
+    //lift_arm_control();
+    //intake_motors_control();
+    //long_piston_control();
+    //odom_piston_control(true);
 }
 
 /*void Assembly::move_lift_arm() {
@@ -87,3 +90,6 @@ void Assembly::long_piston_control() {
         long_piston.toggle();
     }
 }*/
+void Assembly::odom_piston_control(bool state) {
+    odom_piston.set(state);
+}

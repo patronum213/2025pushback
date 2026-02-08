@@ -54,7 +54,8 @@ Assembly assembly(
 	mik::piston(PORT_A),
 	mik::piston(PORT_B),
 	mik::piston(PORT_C),
-	mik::piston(PORT_F)
+	mik::piston(PORT_F),
+	mik::piston(PORT_D)
 );
 
 /** Allows UI to display all motor values */

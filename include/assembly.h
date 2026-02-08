@@ -14,16 +14,18 @@ public:
         mik::piston tougue,
         mik::piston ramp,
         mik::piston gate,
-        mik::piston wing
+        mik::piston wing,
+        mik::piston odom_piston
     );
     
     void init();
     void control();
 
-    void move_lift_arm();
+    /*void move_lift_arm();
     void lift_arm_control();
     void intake_motors_control();
-    void long_piston_control();
+    void long_piston_control();*/
+    void odom_piston_control(bool state);
 
     int lift_arm_position = IDLE;
     vex::task lift_task;
@@ -34,4 +36,5 @@ public:
     mik::piston ramp;
     mik::piston gate;
     mik::piston wing;
+    mik::piston odom_piston;
 };
