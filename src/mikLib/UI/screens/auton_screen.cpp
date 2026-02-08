@@ -100,6 +100,7 @@ void UI_auton_screen::start_auton() {
         queue_autons(true, false);
     }
     queue_autons(false, false);
+    
 }
 
 void UI_auton_screen::start_auton_test() {

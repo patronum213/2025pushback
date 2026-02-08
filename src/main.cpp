@@ -19,14 +19,14 @@ void pre_auton() {
 }
 
 void auton(void) {
-    assembly.odom_piston_control(false);
+    assembly.odom_piston_control(true);
     UI.stop();
     auton_scr->start_auton();
 }
 
 void user_control(void) {
     while (calibrating) { task::sleep(50); }
-   
+    assembly.odom_piston_control(false);
     // How you want your drivetrain to stop during driver
     chassis.set_brake_type(brakeType::coast);
     
@@ -37,7 +37,7 @@ void user_control(void) {
             // Add your user control code here
             chassis.control(drive_mode::SPLIT_ARCADE_CURVED);
             //assembly.control();
-            assembly.odom_piston_control(true);
+            //assembly.odom_piston_control(false);
         }
         task::sleep(5);
     }
@@ -46,7 +46,7 @@ void user_control(void) {
 int main() {
     Competition.autonomous(auton);
     Competition.drivercontrol(user_control);
-
+    
     pre_auton();
 
     while (true) {
