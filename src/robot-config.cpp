@@ -32,7 +32,7 @@ Chassis chassis(
     }),
 
     PORT17, // Inertia sensor port
-    362.3,    // Inertial scale, value that reads after turning robot a full 360
+    370,    // Inertial scale, value that reads after turning robot a full 360
 
     PORT7, // Forward Tracker Port
     -2.75,     // Forward Tracker wheel diameter in inches (negative flips direction)
@@ -49,13 +49,13 @@ Chassis chassis(
 );
 
 Assembly assembly(
-	mik::motor(PORT16, false, blue_6_1, "intake_motor"),
-	mik::motor(PORT6, false, blue_6_1, "outtake_motor"),
-	mik::piston(PORT_A),
-	mik::piston(PORT_B),
-	mik::piston(PORT_C),
-	mik::piston(PORT_F),
-	mik::piston(PORT_D)
+	mik::motor(PORT16, true, blue_6_1, "IntakeMotor"),
+	mik::motor(PORT6, true, blue_6_1, "OuttakeMotor"),
+	mik::piston(PORT_A),//tongue
+	mik::piston(PORT_B),//ramp
+	mik::piston(PORT_F),//gate
+	mik::piston(PORT_C),//wing
+	mik::piston(PORT_D)//odom
 );
 
 /** Allows UI to display all motor values */
@@ -67,8 +67,8 @@ void log_motors() {
     }, 
 	{
 		// Add all mik motors in here
-		assembly.intake_motor,
-		assembly.outtake_motor
+		assembly.IntakeMotor,
+		assembly.OuttakeMotor
     }
   );
 }

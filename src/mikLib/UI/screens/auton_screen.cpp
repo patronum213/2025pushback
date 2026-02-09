@@ -104,6 +104,7 @@ void UI_auton_screen::start_auton() {
 }
 
 void UI_auton_screen::start_auton_test() {
+    assembly.odom_piston.set(false);
     auton_run = vex::task([](){
         auton_scr->disable_controller_overlay();
         auton_scr->exit_auton_task();

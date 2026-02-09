@@ -7,7 +7,7 @@ void default_constants(void) {
     chassis.set_control_constants(5, 10, 1.019, 5, 10, 1.019);
 
     // Each constant set is in the form of (maxVoltage, kP, kI, kD, startI).
-    chassis.set_turn_constants(10, 0.4, 0.027, 3, 15);
+    chassis.set_turn_constants(10, 0.4, 0.04, 2.5, 10);
     chassis.set_drive_constants(10, 1.55, 1.05, 9, 0.75);
     chassis.set_heading_constants(6, .5, 0, 1.8, 0);
     chassis.set_swing_constants(12, .437, .0295, 3.486, 15);
@@ -80,7 +80,38 @@ std::string blue_left_winpoint(bool calibrate, auto_variation var, bool get_name
 
         return "";
     }
-    
+    chassis.set_brake_type(brakeType::brake);
+    assembly.odom_piston.set(true);
+    chassis.drive_distance(30);
+    chassis.turn_to_angle(90);
+    assembly.tongue.set(true);
+    assembly.S_system_control(1);
+    chassis.drive_distance(24, {.timeout = 2000});
+    chassis.drive_distance(-1);
+    chassis.drive_distance(10, {.timeout = 1000});
+    chassis.drive_distance(-7);
+    assembly.tongue.set(false);
+    chassis.turn_to_angle(120);
+    chassis.drive_distance(-16);
+    chassis.turn_to_angle(90);
+    chassis.drive_distance(-64, {.heading = 90});
+    chassis.left_swing_to_angle(-90, {.turn_direction  = ccw});
+    chassis.drive_distance(-10, {.timeout = 1000});
+    assembly.S_system_control(2);
+    wait(1850, msec);
+    assembly.tongue.set(true);
+    wait(500, msec);
+    chassis.drive_distance(35, {.timeout = 4000});
+    wait(1800, msec);
+    chassis.drive_distance(-35, {.timeout = 4000});
+    assembly.S_system_control(2);
+    wait(5000, msec);
+    /*chassis.drive_distance(10);
+    chassis.turn_to_angle(0);
+    assembly.tongue.set(false);
+    chassis.drive_distance(-95, {.heading = 0});
+    chassis.turn_to_angle(-90);*/
+
     return "";
 }
 std::string blue_left_sawp(bool calibrate, auto_variation var, bool get_name) { 

@@ -4,18 +4,18 @@ using namespace vex;
 
 // Pass in the devices we want to use
 Assembly::Assembly(
-    mik::motor intake_motor, 
-    mik::motor outtake_motor, 
-    mik::piston tougue,
+    mik::motor IntakeMotor, 
+    mik::motor OuttakeMotor, 
+    mik::piston tongue,
     mik::piston ramp,
     mik::piston gate,
     mik::piston wing,
     mik::piston odom_piston
 ) :
     // Assign the ports to the devices
-    intake_motor(intake_motor),
-    outtake_motor(outtake_motor),
-    tougue(tougue), // Make sure when using a 3 wire device that isnt mik::piston you convert the port. `to_triport(PORT_A)`.
+    IntakeMotor(IntakeMotor),
+    OuttakeMotor(OuttakeMotor),
+    tongue(tongue), // Make sure when using a 3 wire device that isnt mik::piston you convert the port. `to_triport(PORT_A)`.
     ramp(ramp),
     gate(gate),
     wing(wing),
@@ -35,7 +35,7 @@ void Assembly::init() {
 // You want to put this function inside the user control loop in main.
 void Assembly::control() {
     //lift_arm_control();
-    //intake_motors_control();
+    //IntakeMotors_control();
     //long_piston_control();
     //odom_piston_control(true);
 }
@@ -73,13 +73,13 @@ void Assembly::lift_arm_control() {
 }
 
 // Spins intake forward if L1 is being held, reverse if L2 is being held; stops otherwise
-void Assembly::intake_motors_control() {
+void Assembly::IntakeMotors_control() {
     if (Controller.ButtonL1.pressing()) {
-        intake_motor.spin(fwd, 12, volt);
+        IntakeMotor.spin(fwd, 12, volt);
     } else if (Controller.ButtonL2.pressing()) {
-        intake_motor.spin(fwd, -12, volt);
+        IntakeMotor.spin(fwd, -12, volt);
     } else {
-        intake_motor.stop();
+        IntakeMotor.stop();
     }
 }
 
@@ -92,4 +92,47 @@ void Assembly::long_piston_control() {
 }*/
 void Assembly::odom_piston_control(bool state) {
     odom_piston.set(state);
+}
+/*
+0 = stopped
+1 = intake
+2 = top outtake
+3 = middle outtake
+4 = downtake
+*/
+void Assembly::S_system_control(int systemState) {
+    switch (systemState) {
+            case 4://down outtaking
+            IntakeMotor.spin(directionType::rev, 60, velocityUnits::pct);
+            OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
+            gate.set(true);
+            break; 
+            case 3://middle outtaking
+            IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+            OuttakeMotor.spin(directionType::fwd, 60, velocityUnits::pct);
+            ramp.set(false);
+            gate.set(false);
+            break; 
+            case 2://top outtaking
+            IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+            OuttakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+            ramp.set(true);
+            gate.set(false);
+            break; 
+            case 1://intaking
+            IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
+            OuttakeMotor.spin(directionType::fwd, 50, velocityUnits::pct);
+            //if (limitSwitch) {OuttakeMotor.spin(directionType::fwd, 10, velocityUnits::pct);}
+            //else {OuttakeMotor.stop();}
+            //OuttakeMotor.stop(coast);
+            ramp.set(true);
+            gate.set(true);
+            //OuttakeMotor.stop();
+            break; 
+            case 0:
+            default: 
+            IntakeMotor.stop();
+            OuttakeMotor.stop();
+            break;
+            }
 }

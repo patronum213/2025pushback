@@ -12,6 +12,8 @@ void odom_mode_constants() {
 }
 
 void test_drive() {
+	chassis.set_brake_type(brakeType::brake);
+    assembly.odom_piston.set(true);
 	chassis.drive_distance(6);
 	chassis.drive_distance(12);
 	chassis.drive_distance(18);
@@ -28,7 +30,7 @@ void test_heading() {
 }
 
 void test_turn() {
-	chassis.turn_to_angle(5);
+	/*chassis.turn_to_angle(5);
 	wait(1, sec);
 	chassis.turn_to_angle(30);
 	wait(1, sec);
@@ -38,9 +40,18 @@ void test_turn() {
 	wait(1, sec);
 	chassis.turn_to_angle(180, { .turn_direction = ccw });
 	wait(1, sec);
-	chassis.turn_to_angle(0, { .turn_direction = cw });/*
+	chassis.turn_to_angle(0, { .turn_direction = cw });
 	chassis.turn_to_angle(180, {.turn_direction = ccw });
 	chassis.turn_to_angle(0, {.turn_direction = ccw });*/
+	chassis.set_brake_type(brakeType::brake);
+    assembly.odom_piston.set(true);
+	chassis.turn_to_angle(90);
+	wait(1, sec);
+	chassis.turn_to_angle(180);
+	wait(1, sec);
+	chassis.turn_to_angle(0);
+	
+
 
 }
 
