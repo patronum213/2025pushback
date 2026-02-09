@@ -36,8 +36,7 @@ void user_control(void) {
         if (!control_disabled()) {
             // Add your user control code here
             chassis.control(drive_mode::SPLIT_ARCADE_CURVED);
-            //assembly.control();
-            //assembly.odom_piston_control(false);
+            assembly.control();
         }
         task::sleep(5);
     }

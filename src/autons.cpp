@@ -80,11 +80,7 @@ std::string blue_left_winpoint(bool calibrate, auto_variation var, bool get_name
 
         return "";
     }
-    assembly.odom_piston_control(true);
-    chassis.drive_distance(24);
-    wait(2, sec);
-    chassis.turn_to_angle(90);
-    chassis.drive_distance(24);
+    
     return "";
 }
 std::string blue_left_sawp(bool calibrate, auto_variation var, bool get_name) { 
