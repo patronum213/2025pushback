@@ -76,14 +76,14 @@ std::string template_auto_other_variation(bool calibrate, bool get_name) {
 std::string blue_left_winpoint(bool calibrate, auto_variation var, bool get_name) {
     if (get_name) { return "blue left winpoint"; }
     if (calibrate) {
-        chassis.set_coordinates(0, 0, 0);
+        chassis.set_coordinates(0, 0, 90);
 
         return "";
     }
     chassis.set_brake_type(brakeType::brake);
     assembly.odom_piston.set(true);
-    chassis.drive_distance(30);
-    chassis.turn_to_angle(90);//turn to goal
+    chassis.drive_distance(29);//drive out to the goal
+    chassis.turn_to_angle(180);//turn to goal
     assembly.tongue.set(true);
     assembly.S_system_control(1);//start intake
     wait(500, msec);
@@ -93,38 +93,82 @@ std::string blue_left_winpoint(bool calibrate, auto_variation var, bool get_name
     chassis.drive_distance(-7);//drive out enough to turn
     assembly.tongue.set(false);
     assembly.S_system_control(0);//stop intake
-    chassis.turn_to_angle(110);//turn diagonal towards the wall-goal channel
+    chassis.turn_to_angle(200);//turn diagonal towards the wall-goal channel
     chassis.drive_distance(-24);//drive towards the wall
-    chassis.turn_to_angle(90);//turn to just over 90 (towards the wall)
-    chassis.drive_distance(-65, {.heading = 83});//drive along the goal, turning slightly towards it
-    chassis.left_swing_to_angle(-42, {.max_voltage = 8, .turn_direction  = ccw});//swing around to the goal's mouth
-    chassis.turn_to_angle(-90);
+    chassis.turn_to_angle(180);//turn to just over 90 (towards the wall)
+    chassis.drive_distance(-60, {.heading = 174});//drive along the goal, turning slightly towards it
+
+
+    chassis.left_swing_to_angle(0, {.max_voltage = 8, .turn_direction  = ccw});//swing around to the goal's mouth
+    chassis.turn_to_angle(-10);
     chassis.drive_distance(-20, {.timeout = 1500});//drive in to it
+
     assembly.S_system_control(2);//outtake
     wait(1850, msec);
     assembly.tongue.set(true);//outtake
     wait(500, msec);
+    
 
-
-    chassis.drive_distance(35, {.max_voltage = 5, .timeout = 2000, .heading = -90});//drive away from it in to the other chute
+    
+    chassis.drive_distance(35, {.max_voltage = 5, .timeout = 2000, .heading = 0});//drive away from it in to the other chute
     assembly.S_system_control(1);//go back to intaking
     wait(900, msec);
     chassis.drive_distance(-1);
     chassis.drive_distance(10, {.timeout = 1000});//jostle it slightly
-    chassis.drive_distance(-35, {.timeout = 1500, .heading = -90});//drive out back in to the goal
+    chassis.drive_distance(-35, {.timeout = 1500, .heading = 0});//drive out back in to the goal
     assembly.S_system_control(2);//score them
     wait(1900, msec);
-    chassis.set_coordinates(0, 0, -90); 
-    chassis.drive_distance(10);//back out
-    chassis.turn_to_angle(0);//turn to the otherside of the field
-    assembly.tongue.set(false);
-    chassis.drive_distance(-94, {.heading = 0});//drive over to the otherside 
-    chassis.turn_to_angle(-90); //turn towards the other chute
+    //chassis.set_coordinates(0, 0, 0); 
 
+
+    chassis.drive_distance(10);//back out
+    chassis.turn_to_angle(90);//turn to the otherside of the field
+    assembly.tongue.set(false);
+    chassis.drive_distance(-94, {.heading = 90});//drive over to the otherside 
+    chassis.turn_to_angle(0); //turn towards the other chute
+
+
+
+
+    
     //repeat otherside code here
 
+    //TODO: angles for other side should be double inverted 
+    assembly.tongue.set(true);
+    assembly.S_system_control(1);//start intake
+    wait(500, msec);
+    chassis.drive_distance(24, {.max_voltage = 5, .timeout = 2000});//drive in to goal
+    chassis.drive_distance(-1);
+    chassis.drive_distance(10, {.timeout = 1000});//jostle slightly to get all the balls
+    chassis.drive_distance(-7);//drive out enough to turn
+    assembly.tongue.set(false);
+    assembly.S_system_control(0);//stop intake
+    chassis.turn_to_angle(200);//turn diagonal towards the wall-goal channel
+    chassis.drive_distance(-24);//drive towards the wall
+    chassis.turn_to_angle(180);//turn to just over 90 (towards the wall)
+    chassis.drive_distance(-60, {.heading = 174});//drive along the goal, turning slightly towards it
 
 
+    chassis.left_swing_to_angle(0, {.max_voltage = 8, .turn_direction  = ccw});//swing around to the goal's mouth
+    chassis.turn_to_angle(-10);
+    chassis.drive_distance(-20, {.timeout = 1500});//drive in to it
+
+    assembly.S_system_control(2);//outtake
+    wait(1850, msec);
+    assembly.tongue.set(true);//outtake
+    wait(500, msec);
+    
+
+    
+    chassis.drive_distance(35, {.max_voltage = 5, .timeout = 2000, .heading = 0});//drive away from it in to the other chute
+    assembly.S_system_control(1);//go back to intaking
+    wait(900, msec);
+    chassis.drive_distance(-1);
+    chassis.drive_distance(10, {.timeout = 1000});//jostle it slightly
+    chassis.drive_distance(-35, {.timeout = 1500, .heading = 0});//drive out back in to the goal
+    assembly.S_system_control(2);//score them
+    wait(1900, msec);
+    /**/
     return "";
 }
 std::string blue_left_sawp(bool calibrate, auto_variation var, bool get_name) { 
