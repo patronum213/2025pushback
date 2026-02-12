@@ -100,7 +100,7 @@ std::string blue_left_winpoint(bool calibrate, auto_variation var, bool get_name
 
 
     chassis.left_swing_to_angle(0, {.max_voltage = 8, .turn_direction  = ccw});//swing around to the goal's mouth
-    chassis.turn_to_angle(-10);
+    chassis.turn_to_angle(-11);
     chassis.drive_distance(-20, {.timeout = 1500});//drive in to it
 
     assembly.S_system_control(2);//outtake
@@ -110,12 +110,12 @@ std::string blue_left_winpoint(bool calibrate, auto_variation var, bool get_name
     
 
     
-    chassis.drive_distance(35, {.max_voltage = 5, .timeout = 2000, .heading = 0});//drive away from it in to the other chute
+    chassis.drive_distance(35, {.max_voltage = 5, .timeout = 2000, .heading = -2});//drive away from it in to the other chute
     assembly.S_system_control(1);//go back to intaking
     wait(900, msec);
     chassis.drive_distance(-1);
     chassis.drive_distance(10, {.timeout = 1000});//jostle it slightly
-    chassis.drive_distance(-35, {.timeout = 1500, .heading = 0});//drive out back in to the goal
+    chassis.drive_distance(-35, {.timeout = 1500, .heading = 0, .max_voltage = 8});//drive out back in to the goal
     assembly.S_system_control(2);//score them
     wait(1900, msec);
     //chassis.set_coordinates(0, 0, 0); 
@@ -123,8 +123,7 @@ std::string blue_left_winpoint(bool calibrate, auto_variation var, bool get_name
 
     chassis.drive_distance(10);//back out
     chassis.turn_to_angle(90);//turn to the otherside of the field
-    assembly.tongue.set(false);
-    chassis.drive_distance(-94, {.heading = 90});//drive over to the otherside 
+    chassis.drive_distance(-95, {.heading = 90});//drive over to the otherside 
     chassis.turn_to_angle(0); //turn towards the other chute
 
 
@@ -134,38 +133,38 @@ std::string blue_left_winpoint(bool calibrate, auto_variation var, bool get_name
     //repeat otherside code here
 
     //TODO: angles for other side should be double inverted, -180 from the original
-    assembly.tongue.set(true);
     assembly.S_system_control(1);//start intake
-    wait(500, msec);
     chassis.drive_distance(24, {.max_voltage = 5, .timeout = 2000});//drive in to goal
     chassis.drive_distance(-1);
     chassis.drive_distance(10, {.timeout = 1000});//jostle slightly to get all the balls
-    chassis.drive_distance(-7);//drive out enough to turn
+    
+    chassis.drive_distance(-35, {.timeout = 1500, .max_voltage = 8});//drive in to the goal just to center ourselves
+
+    chassis.drive_distance(24, {.heading = -2});
     assembly.tongue.set(false);
     assembly.S_system_control(0);//stop intake
     chassis.turn_to_angle(20);//turn diagonal towards the wall-goal channel
-    chassis.drive_distance(-24);//drive towards the wall
+    chassis.drive_distance(-26);//drive towards the wall
     chassis.turn_to_angle(0);//turn to just over 90 (towards the wall)
-    chassis.drive_distance(-60, {.heading = -6});//drive along the goal, turning slightly towards it
+    chassis.drive_distance(-60, {.heading = 2});//drive along the goal, turning slightly towards it
 
 
     chassis.left_swing_to_angle(-180, {.max_voltage = 8, .turn_direction  = ccw});//swing around to the goal's mouth
-    chassis.turn_to_angle(-190);
+    chassis.turn_to_angle(-191);
     chassis.drive_distance(-20, {.timeout = 1500});//drive in to it
 
     assembly.S_system_control(2);//outtake
     wait(1850, msec);
     assembly.tongue.set(true);//outtake
     wait(500, msec);
-    
 
     
-    chassis.drive_distance(35, {.max_voltage = 5, .timeout = 2000, .heading = 0});//drive away from it in to the other chute
+    chassis.drive_distance(35, {.max_voltage = 5, .timeout = 2000, .heading = -180});//drive away from it in to the other chute
     assembly.S_system_control(1);//go back to intaking
     wait(900, msec);
     chassis.drive_distance(-1);
     chassis.drive_distance(10, {.timeout = 1000});//jostle it slightly
-    chassis.drive_distance(-35, {.timeout = 1500, .heading = 0});//drive out back in to the goal
+    chassis.drive_distance(-35, {.timeout = 1500, .heading = -180, .max_voltage = 8});//drive out back in to the goal
     assembly.S_system_control(2);//score them
     wait(1900, msec);
     /**/
