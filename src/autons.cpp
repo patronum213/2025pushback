@@ -133,7 +133,7 @@ std::string blue_left_winpoint(bool calibrate, auto_variation var, bool get_name
     
     //repeat otherside code here
 
-    //TODO: angles for other side should be double inverted 
+    //TODO: angles for other side should be double inverted, -180 from the original
     assembly.tongue.set(true);
     assembly.S_system_control(1);//start intake
     wait(500, msec);
@@ -143,14 +143,14 @@ std::string blue_left_winpoint(bool calibrate, auto_variation var, bool get_name
     chassis.drive_distance(-7);//drive out enough to turn
     assembly.tongue.set(false);
     assembly.S_system_control(0);//stop intake
-    chassis.turn_to_angle(200);//turn diagonal towards the wall-goal channel
+    chassis.turn_to_angle(20);//turn diagonal towards the wall-goal channel
     chassis.drive_distance(-24);//drive towards the wall
-    chassis.turn_to_angle(180);//turn to just over 90 (towards the wall)
-    chassis.drive_distance(-60, {.heading = 174});//drive along the goal, turning slightly towards it
+    chassis.turn_to_angle(0);//turn to just over 90 (towards the wall)
+    chassis.drive_distance(-60, {.heading = -6});//drive along the goal, turning slightly towards it
 
 
-    chassis.left_swing_to_angle(0, {.max_voltage = 8, .turn_direction  = ccw});//swing around to the goal's mouth
-    chassis.turn_to_angle(-10);
+    chassis.left_swing_to_angle(-180, {.max_voltage = 8, .turn_direction  = ccw});//swing around to the goal's mouth
+    chassis.turn_to_angle(-190);
     chassis.drive_distance(-20, {.timeout = 1500});//drive in to it
 
     assembly.S_system_control(2);//outtake
