@@ -32,11 +32,11 @@ float distributeExponentially (float input, float tuning = 1.001) {//increasing 
 void user_control(void) {
     while (calibrating) { task::sleep(50); }
     //assembly.init();
-    /*chassis.set_brake_type(brakeType::coast);
+    chassis.set_brake_type(brakeType::coast);
     assembly.odom_piston.set(false);//retract odometry wheels
     assembly.tongue.set(true);
     assembly.ramp.set(true);
-    */float FBsensitivity = 0.8;
+    float FBsensitivity = 0.8;
     float LRsensitivity = 0.25;
     float PIDIncrement = 0.25;
     float PIDTolerancePct = 5;
@@ -52,6 +52,7 @@ void user_control(void) {
     bool R1pressed = false;
     bool R2pressed = false;
     bool Bpressed = false;
+    bool Ypressed = false;
     bool Downpressed = false;
     bool Uppressed = false;
     float LeftRampProgress = rampFloor;
@@ -59,7 +60,7 @@ void user_control(void) {
     int systemState = 1;//0 is at rest, 1 is intaking, 2 is top outtaking, 3 is bottom outtaking
     int timer1 = 0;
     bool turbo = false;
-    while (false) {//TODO: change to true
+    while (true) {//TODO: change to true
         if (!control_disabled()) {
             //Driving Control
             //controller dead zone
@@ -116,10 +117,10 @@ void user_control(void) {
 
             LeftSidePower = (LeftSidePower/100.0)*127.0;
             RightSidePower = (RightSidePower/100.0)*127.0;
-            
+            if (!chassis.is_in_motion()) {
             chassis.left_drive.spin(fwd, LeftSidePower, volt);
             chassis.right_drive.spin(fwd, RightSidePower, volt);
-            
+            }
 
             if (timer1 >= 0) {timer1 -= 1;};
             
@@ -146,14 +147,30 @@ void user_control(void) {
             else {assembly.wing.set(true);}*/
             //tongue
             if (Controller.ButtonB.pressing() && !Bpressed) {
-            if (assembly.tongue.state()) {assembly.tongue.set(false);}
-            else {assembly.tongue.set(true);
-            systemState = 1;  
-            }
+                if (assembly.tongue.state()) {assembly.tongue.set(false);}
+                else {assembly.tongue.set(true); systemState = 1;}
             Bpressed = true;
             }
             if (!Controller.ButtonB.pressing()) {
             Bpressed = false;
+            };
+            //swing macro
+            if (Controller.ButtonY.pressing() && !Ypressed) {
+                if (chassis.is_in_motion()) {chassis.cancel_motion();}
+                else {
+                    chassis.set_coordinates(0, 0, 0);
+                    assembly.odom_piston.set(true);
+                    assembly.tongue.set(false);
+                    chassis.drive_distance(35, {.heading = -45});
+                    chassis.drive_distance(5, {.heading = -80});
+                    chassis.drive_distance(6, {.timeout = 500});
+                    assembly.odom_piston.set(false);
+                    assembly.tongue.set(true);
+                };
+            Ypressed = true;
+            }
+            if (!Controller.ButtonY.pressing()) {
+            Ypressed = false;
             };
             //intaking
             if (Controller.ButtonR2.pressing() && !R2pressed) {
@@ -184,9 +201,8 @@ void user_control(void) {
             };
             //top outtaking
             if (Controller.ButtonL2.pressing() && !L2pressed) {
-            systemState = 4; timer1 = 1;
-            /*if (systemState == 2) {systemState=0;}
-            else {systemState = 2;}*/
+            if (systemState == 2) {systemState=0;}
+            else {systemState = 2;}
             
             L2pressed = true;
             }
