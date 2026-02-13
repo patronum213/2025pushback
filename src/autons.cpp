@@ -216,12 +216,32 @@ std::string blue_left_elim(bool calibrate, auto_variation var, bool get_name) {
 
         return "";
     }
-    chassis.drive_distance(24);
+    //middle
+    chassis.set_brake_type(brakeType::brake);
+    assembly.odom_piston.set(true);
+    assembly.S_system_control(1);
+    chassis.drive_to_pose(-14.8, 32, -45, {.lead = 0.55});
+    //chassis.drive_distance(35, {.heading = -45});
     chassis.turn_to_angle(-135);
-    chassis.drive_distance(-10);
+    chassis.drive_distance(-20);
     assembly.S_system_control(3);
+    wait(5000, msec);
+    chassis.drive_distance(49);
+    chassis.turn_to_angle(180);
+    //chute
+    chassis.drive_distance(35, {.max_voltage = 5, .timeout = 2000, .heading = -180});//drive away from it in to the other chute
+    assembly.S_system_control(1);//go back to intaking
+    wait(900, msec);
+    chassis.drive_distance(-1);
+    chassis.drive_distance(10, {.timeout = 1250});//jostle it slightly
+    chassis.drive_distance(-35, {.timeout = 1500, .heading = -182, .max_voltage = 8});//drive out back in to the goal
+    assembly.S_system_control(2);//outtake
     wait(500, msec);
     assembly.S_system_control(4);
+    wait(150, msec);
+    assembly.S_system_control(2);
+    wait(1100, msec);
+    /*assembly.S_system_control(4);
     wait(100, msec);
     assembly.S_system_control(3);
     wait(1000, msec);
@@ -234,6 +254,7 @@ std::string blue_left_elim(bool calibrate, auto_variation var, bool get_name) {
     chassis.drive_distance(35, {.timeout = 2000});
     assembly.S_system_control(2);
     wait(5000, msec);
+    */
     return "";
 }
 std::string blue_right_winpoint(bool calibrate, auto_variation var, bool get_name) {
