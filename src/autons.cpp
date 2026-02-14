@@ -219,33 +219,6 @@ std::string blue_left_elim(bool calibrate, auto_variation var, bool get_name) {
 
         return "";
     }
-    //middle
-    chassis.set_brake_type(brakeType::brake);
-    assembly.odom_piston.set(true);
-    assembly.S_system_control(1);
-    chassis.drive_to_pose(-14.8, 32, -45, {.lead = 0.55});
-    //chassis.drive_distance(35, {.heading = -45});
-    chassis.turn_to_angle(-135);
-    chassis.drive_distance(-21);
-    assembly.S_system_control(3);
-    wait(2000, msec);
-    chassis.drive_distance(50);
-    chassis.turn_to_angle(180);
-    assembly.tongue.set(true);
-    wait(500, msec);
-    //chute
-    chassis.drive_distance(35, {.max_voltage = 5, .timeout = 2000, .heading = -180});//drive away from it in to the other chute
-    assembly.S_system_control(1);//go back to intaking
-    wait(900, msec);
-    chassis.drive_distance(-1.5);
-    chassis.drive_distance(10, {.timeout = 1250});//jostle it slightly
-    chassis.drive_distance(-35, {.timeout = 1500, .heading = -182, .max_voltage = 8});//drive out back in to the goal
-    assembly.S_system_control(2);//outtake
-    wait(500, msec);
-    assembly.S_system_control(4);
-    wait(150, msec);
-    assembly.S_system_control(2);
-    wait(1100, msec);
     
     return "";
 }
@@ -256,7 +229,7 @@ std::string blue_right_winpoint(bool calibrate, auto_variation var, bool get_nam
 
         return "";
     }
-
+    
     return "";
 }
 std::string blue_right_sawp(bool calibrate, auto_variation var, bool get_name) { 
@@ -287,7 +260,45 @@ std::string red_left_winpoint(bool calibrate, auto_variation var, bool get_name)
 
         return "";
     }
-    
+    //middle
+    chassis.set_brake_type(brakeType::brake);
+    assembly.odom_piston.set(true);
+    assembly.S_system_control(1);
+    //chassis.drive_to_pose(-14.8, 32, -45, {.lead = 0.55});
+    chassis.drive_distance(24, {.heading = 0});
+    chassis.turn_to_angle(-25);
+    chassis.drive_distance(18, {.heading = -25, .max_voltage = 2, .wait = false, .timeout = 3200});
+    wait(3000, msec);
+    assembly.tongue.set(true);
+    wait(300, msec);
+    chassis.turn_to_angle(-135);
+    assembly.ramp.set(false);
+    chassis.drive_distance(-16);
+    assembly.tongue.set(false);
+    assembly.S_system_control(3);//outtake
+    wait(200, msec);
+    assembly.S_system_control(4);
+    wait(100, msec);
+    assembly.S_system_control(3);
+    wait(900, msec);
+    assembly.S_system_control(1);
+    chassis.drive_distance(52, {.heading = -135});
+    chassis.turn_to_angle(180);
+    assembly.tongue.set(true);
+    wait(500, msec);
+    //chute
+    chassis.drive_distance(35, {.max_voltage = 5, .timeout = 1000, .heading = -180});//drive away from it in to the other chute
+    assembly.S_system_control(1);//go back to intaking
+    //wait(800, msec);
+    //chassis.drive_distance(-1.5);
+    //chassis.drive_distance(10, {.timeout = 1250});//jostle it slightly
+    chassis.drive_distance(-35, {.timeout = 1500, .heading = 180, .max_voltage = 8});//drive out back in to the goal
+    assembly.S_system_control(2);//outtake
+    wait(500, msec);
+    assembly.S_system_control(4);
+    wait(150, msec);
+    assembly.S_system_control(2);
+    wait(1100, msec);
     return "";
 }
 std::string red_left_sawp(bool calibrate, auto_variation var, bool get_name) { 
