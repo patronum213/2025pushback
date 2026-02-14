@@ -103,13 +103,13 @@ void Assembly::odom_piston_control(bool state) {
 void Assembly::S_system_control(int systemState) {
     switch (systemState) {
             case 4://down outtaking
-            IntakeMotor.spin(directionType::rev, 60, velocityUnits::pct);
+            IntakeMotor.spin(directionType::rev, 55, velocityUnits::pct);
             OuttakeMotor.spin(directionType::rev, 100, velocityUnits::pct);
             gate.set(true);
             break; 
             case 3://middle outtaking
             IntakeMotor.spin(directionType::fwd, 100, velocityUnits::pct);
-            OuttakeMotor.spin(directionType::fwd, 60, velocityUnits::pct);
+            OuttakeMotor.spin(directionType::fwd, 50, velocityUnits::pct);
             ramp.set(false);
             gate.set(false);
             break; 
