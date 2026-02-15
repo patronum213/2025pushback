@@ -91,7 +91,7 @@ std::string blue_left_winpoint(bool calibrate, auto_variation var, bool get_name
     wait(1000, msec);
     chassis.drive_distance(24.3, {.max_voltage = 5, .timeout = 2000});//drive in to chute
     chassis.drive_distance(-1.5);
-    chassis.drive_distance(10, {.timeout = 1250});//jostle slightly to get all the balls
+    chassis.drive_distance(10, {.timeout = 1450});//jostle slightly to get all the balls
 
     //move over to the other side
     chassis.drive_distance(-7);//drive out enough to turn
@@ -122,7 +122,7 @@ std::string blue_left_winpoint(bool calibrate, auto_variation var, bool get_name
     assembly.S_system_control(1);//go back to intaking
     wait(900, msec);
     chassis.drive_distance(-1.5);
-    chassis.drive_distance(10, {.timeout = 1250});//jostle it slightly
+    chassis.drive_distance(10, {.timeout = 1450});//jostle it slightly
     chassis.turn_to_angle(0);
     chassis.drive_distance(-35, {.timeout = 1500, .heading = 0, .max_voltage = 7});//drive out back in to the goal
     assembly.S_system_control(2);//outtake 
@@ -196,7 +196,7 @@ std::string blue_left_winpoint(bool calibrate, auto_variation var, bool get_name
     assembly.odom_piston.set(false);
     assembly.tongue.set(true);
     wait(500, msec);
-    chassis.drive_distance(9999, {.timeout = 1350, .wait = false});
+    chassis.drive_distance(9999, {.timeout = 1200, .wait = false});
     wait(500, msec);
     assembly.tongue.set(false);
     /**/
