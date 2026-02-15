@@ -279,12 +279,12 @@ std::string red_left_winpoint(bool calibrate, auto_variation var, bool get_name)
     assembly.S_system_control(4);
     wait(100, msec);
     assembly.S_system_control(3);
-    wait(900, msec);
+    wait(800, msec);
     assembly.S_system_control(1);
     chassis.drive_distance(52, {.heading = -135});
     chassis.turn_to_angle(180);
     assembly.tongue.set(true);
-    wait(500, msec);
+    wait(800, msec);
     //chute
     chassis.drive_distance(35, {.max_voltage = 5, .timeout = 1000, .heading = -180});//drive away from it in to the other chute
     assembly.S_system_control(1);//go back to intaking
@@ -297,7 +297,11 @@ std::string red_left_winpoint(bool calibrate, auto_variation var, bool get_name)
     assembly.S_system_control(4);
     wait(150, msec);
     assembly.S_system_control(2);
-    wait(1100, msec);
+    wait(1500, msec);
+    chassis.drive_distance(9);
+    assembly.ramp.set(false);
+    wait(500, msec);
+    chassis.drive_distance(-20, {.timeout = 5000});
     return "";
 }
 std::string red_left_sawp(bool calibrate, auto_variation var, bool get_name) { 
